@@ -1,7 +1,7 @@
 Package: climater
 Type: Package
 Title: Find YOUR climate
-Version: 0.0.0.9003
+Version: 0.0.0.9004
 Author: Janko Thyson
 Maintainer: Janko Thyson <janko.thyson@rappster.io>
 Description: Recommends locations that match your climate preferences.

@@ -16,14 +16,19 @@ knitr::opts_chunk$set(echo = TRUE)
 # install.packages("DT")
 library(shiny)
 library(DT)
-library(climater)
-# devtools::load_all(here::here())
+if (basename(here::here()) == "climater") {
+  devtools::load_all(here::here())
+} else {
+  library(climater)  
+}
 
 settings <- default_settings()
 settings$output$show <- FALSE
-# source(here::here("inst/app/4-load.R"))
-source("4-load.R")
-# source("model_dist_philentropy.R")
+if (basename(here::here()) == "climater") {
+  source(here::here("inst/app/4-load.R"))
+} else {
+  source("4-load.R")  
+}
 dat_db_0 <- data_read_db(vsn = "v3")
 ```
 
@@ -120,18 +125,18 @@ dat_input_rea <- reactive({
   dat[ , input$msr_inputs_chosen]
 })
 
-# dat_output_rea <- reactive({
 dat_output_rea <- eventReactive(input$do, {
-  # renderPrint({
   dat_input <- dat_input_rea()
   knn <- as.numeric(input$knn)
   dist_measures <- input$dist_measures
   dist_measure_final <- input$dist_measure_final
-  # source(here::here("inst/app/6-model.R"), local = TRUE)
-  source("6-model.R", local = TRUE)
-  # # dat_result_unique[[1]]$output
-  # model_result_render(model_result_gathered)
-  # options = list(scrollX = TRUE)
+  
+  if (basename(here::here()) == "climater") {
+    source(here::here("inst/app/6-model.R"), local = TRUE)
+  } else {
+    source("6-model.R", local = TRUE)
+  }
+  
   model_result_gathered
 })
 ```
