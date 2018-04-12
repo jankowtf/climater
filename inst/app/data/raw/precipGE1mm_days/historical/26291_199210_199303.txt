@@ -1,0 +1,4 @@
+Jahr;Jan;Feb;Mrz;Apr;Mai;Jun;Jul;Aug;Sep;Okt;Nov;Dez
+1992;;;;;;;;;;13.0;12.0;9.0
+1993;13.0;;12.0;;;;;;;;;
+

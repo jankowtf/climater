@@ -1,0 +1,155 @@
+---
+title: "Sanity checks: station IDs"
+subtitle: 'Data version: v1'
+author: "Janko Thyson"
+date: "11 April 2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+devtools::load_all(here::here())
+# library(climater)
+library(tidyverse)
+```
+
+## Hypothesis
+
+There are mismatches in station ID structures between `dat_station` and
+`dat_join_full`. Station IDs in `dat_join_full` always have 5 digits while there
+exist 4-digit IDs in `dat_station`.
+
+## Load data 
+
+```{r}
+dat_join_full <- data_read_join_full(vsn = "v1") 
+dat_station <- data_read_station(dtype = "tidy", vsn = "v1")
+```
+
+## Anti joins
+
+```{r}
+# IDs present in 'dat_join_full' but not in 'dat_station' -----
+ajoin_1 <- dat_join_full %>% anti_join(dat_station, by = "dim_station")
+ajoin_1_ids <- ajoin_1$dim_station %>% unique
+# IDs present in 'dat_station' but not in 'dat_join_full'-----
+ajoin_2 <- dat_station %>% anti_join(dat_join_full, by = "dim_station")
+ajoin_2_ids <- ajoin_2$dim_station %>% unique
+
+ajoin_ids_total <- length(ajoin_1_ids) + length(ajoin_2_ids)
+```
+
+In total, there are `r ajoin_ids_total` mismatches in
+station IDs
+
+## Hypothesis testing
+
+```{r}
+ajoin_1_dim_station <- unique(ajoin_1$dim_station)
+idx <- str_detect(ajoin_1_dim_station, "^0.*")
+
+check_dim_station <- function(
+  dim_station_long, 
+  dim_station_short, 
+  dat_join_full, 
+  dat_station
+) {
+  list(
+    dat_join_full_1 = dat_join_full %>% filter(dim_station == dim_station_long) %>% 
+      select(dim_station, starts_with("msr_")),
+    dat_join_full_2 = dat_join_full %>% filter(dim_station == dim_station_short) %>% 
+      select(dim_station, starts_with("msr_")),
+    dat_station_1 = dat_station %>% filter(dim_station == dim_station_long),
+    dat_station_2 = dat_station %>% filter(dim_station == dim_station_short)
+  )
+}
+dim_station_1 <- "1001"
+dim_station_2 <- "01001"
+dim_station_1 <- "8027"
+dim_station_2 <- "08027"
+
+dim_station_long <- ajoin_1_dim_station[idx][1]
+dim_station_long <- ajoin_1_dim_station[idx][2]
+dim_station_long <- ajoin_1_dim_station[idx][3]
+dim_station_short <- str_replace(dim_station_long, "^0", "")
+check_dim_station(
+  dim_station_long = dim_station_long, 
+  dim_station_short = dim_station_short, 
+  dat_join_full = dat_join_full, 
+  dat_station = dat_station
+)
+```
+
+## Findings
+
+* None of the short IDs (4 digits) are part of `dat_join_full`
+* None of the long IDS (5 digits) are part of `dat_station`
+* This supports the hypothesis
+* **Hypothesis confirmed** 
+
+## Normalizing IDs
+
+In `dat_station`
+
+```{r}
+# Identify 4-digit IDs in 'dat_station' -----
+dat_station$dim_station %>% nchar() == 4
+
+# Mutate 4-digits IDS to 5-digit IDs -----
+dat_station_2 <- dat_station %>% mutate(
+  dim_station = case_when(
+      nchar(dim_station) == 4 ~ sprintf("0%s", dim_station),
+      TRUE ~ dim_station
+    )
+)
+
+# Check result -----
+dat_station_2$dim_station %>% nchar() == 4
+```
+
+In `dat_join_full`
+
+```{r}
+# Identify 4-digit IDs in 'dat_join_full' -----
+any(dat_join_full$dim_station %>% nchar() == 4)
+
+# Mutate 4-digits IDS to 5-digit IDs -----
+dat_join_full_2 <- dat_join_full %>% mutate(
+  dim_station = case_when(
+      nchar(dim_station) == 4 ~ sprintf("0%s", dim_station),
+      TRUE ~ dim_station
+    )
+)
+
+# Check result -----
+any(dat_join_full_2$dim_station %>% nchar() == 4)
+```
+
+## Anti joins 2
+
+```{r}
+# IDs present in dat_join_full but not in dat_station -----
+ajoin_2_1 <- dat_join_full_2 %>% anti_join(dat_station_2, by = "dim_station")
+ajoin_2_1_ids <- ajoin_2_1$dim_station %>% unique
+# IDs present in dat_station but not in dat_join_full -----
+ajoin_2_2 <- dat_station_2 %>% anti_join(dat_join_full_2, by = "dim_station")
+ajoin_2_2_ids <- ajoin_2_2$dim_station %>% unique
+
+dat_join_full %>% filter(dim_station == "2616")
+idx <- str_detect(dat_station_2$dim_station, "8535") %>% which()
+dat_station_2[idx, ]
+
+ajoin_2_ids_total <- length(ajoin_2_1_ids) + length(ajoin_2_2_ids)
+ajoin_reduction <- round(1 - (ajoin_2_ids_total / ajoin_ids_total), 4) * 100
+```
+
+After ID normalization, there are `r ajoin_2_ids_total` mismatches in.
+
+Thus, reduction from `r ajoin_2_ids_total` to `r ajoin_ids_total` (`r ajoin_reduction` %)
+
+## Conclusions
+
+* Station ID normalization is added to data processing
+* This is reflected in data version `v2` by means of function `data_trans_normalize_station_id`

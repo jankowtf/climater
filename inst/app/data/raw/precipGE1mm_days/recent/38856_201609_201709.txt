@@ -1,0 +1,4 @@
+Jahr;Jan;Feb;Mrz;Apr;Mai;Jun;Jul;Aug;Sep;Okt;Nov;Dez
+2016;;;;;;;;;0.0;;;
+2017;;;;;;;;;0.0;;;
+

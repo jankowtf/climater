@@ -1,0 +1,162 @@
+---
+title: "climater app"
+subtitle: "v0.0.0.9000"
+author: "Janko Thyson"
+date: "2018-04-12"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# install.packages("shiny")
+# install.packages("DT")
+library(shiny)
+library(DT)
+library(climater)
+# devtools::load_all(here::here())
+
+settings <- default_settings()
+settings$output$show <- FALSE
+# source(here::here("inst/app/4-load.R"))
+source("4-load.R")
+# source("model_dist_philentropy.R")
+dat_db_0 <- data_read_db(vsn = "v3")
+```
+
+## Inputs
+
+Note:
+
+* `Distance measures` controls on which distance measures the "raw" prediction is based. By default, all distance measures are used, but you can select the ones you want.
+* `Distance measure for ensemble` controls which *single* distance measure should be used in order to produce an "ensemble" prediction (most frequent rank)
+* If only one distance measure is specified in `Distance measure`, then the ensemble predictions are identical to the raw predicitons.
+
+```{r frontend, echo=FALSE}
+# renderPrint({
+#   dat_db_0$msr_precip_max
+# })
+
+inputPanel(
+  selectInput("time_month", label = "Month of year",
+    choices = 1:12, selected = 7),
+  
+  sliderInput("msr_temp_min", label = "Min. temperature",
+    min = min(dat_db_0$msr_temp_min, na.rm = TRUE), 
+    max = max(dat_db_0$msr_temp_min, na.rm = TRUE), 
+    value = mean(dat_db_0$msr_temp_min, na.rm = TRUE), step = 0.5),
+  
+  sliderInput("msr_temp_max", label = "Max. temperature",
+    min = min(dat_db_0$msr_temp_max, na.rm = TRUE),
+    max = max(dat_db_0$msr_temp_max, na.rm = TRUE), 
+    value = mean(dat_db_0$msr_temp_min, na.rm = TRUE), step = 0.5),
+  
+  sliderInput("msr_temp_avg", label = "Avg. temperature",
+    min = min(dat_db_0$msr_temp_avg, na.rm = TRUE), 
+    max = max(dat_db_0$msr_temp_avg, na.rm = TRUE), 
+    value = mean(dat_db_0$msr_temp_avg, na.rm = TRUE), step = 0.5),
+  
+  sliderInput("msr_precip_min", label = "Min. precipitation",
+    min = min(dat_db_0$msr_precip_min, na.rm = TRUE), 
+    max = max(dat_db_0$msr_precip_min, na.rm = TRUE), 
+    value = mean(dat_db_0$msr_precip_min, na.rm = TRUE), step = 0.5),
+  
+  sliderInput("msr_precip_max", label = "Max. precipitation",
+    min = min(dat_db_0$msr_precip_max, na.rm = TRUE),
+    max = max(dat_db_0$msr_precip_max, na.rm = TRUE),
+    # value = mean(dat_db_0$msr_precip_min, na.rm = TRUE), 
+    value = 10,
+    step = 0.5),
+  
+  sliderInput("msr_precip_avg", label = "Avg. precipitation",
+    min = min(dat_db_0$msr_precip_avg, na.rm = TRUE),
+    max = max(dat_db_0$msr_precip_avg, na.rm = TRUE), value = 10, step = 0.5),
+  
+  sliderInput("msr_sundur_avg", label = "Avg. sunshine duration",
+    min = min(dat_db_0$msr_sundur_avg, na.rm = TRUE), 
+    max = max(dat_db_0$msr_sundur_avg, na.rm = TRUE),
+    value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE), step = 0.5),
+  
+  selectInput("knn", label = "Number of recommendations",
+    choices = 1:10, selected = 3),
+  
+  shiny::checkboxGroupInput("msr_inputs_chosen", label = "Choose inputs to use",
+    choices = c(
+      "time_month", 
+      "msr_temp_min", 
+      "msr_temp_max",
+      "msr_temp_avg",
+      "msr_precip_min", 
+      "msr_precip_max",
+      "msr_precip_avg",
+      "msr_sundur_avg"
+    ),
+    selected = c("time_month", "msr_temp_avg")
+  ),
+  
+  selectInput("dist_measures", label = "Distance measures",
+    choices = default_dist_measures(), selected = 1, multiple = TRUE),
+  
+  selectInput("dist_measure_final", label = "Distance measures for ensemble",
+    choices = default_dist_measures(), selected = 1),
+  
+  actionButton("do", "Submit", icon = icon("refresh"))
+)
+
+dat_input_rea <- reactive({
+  dat <- data.frame(
+    time_month = as.numeric(input$time_month),
+    msr_temp_min = as.numeric(input$msr_temp_min),
+    msr_temp_max = as.numeric(input$msr_temp_max),
+    msr_temp_avg = as.numeric(input$msr_temp_avg),
+    msr_precip_min = as.numeric(input$msr_precip_min),
+    msr_precip_max = as.numeric(input$msr_precip_max),
+    msr_precip_avg = as.numeric(input$msr_precip_avg),
+    msr_sundur_avg = as.numeric(input$msr_sundur_avg)
+  ) 
+  dat[ , input$msr_inputs_chosen]
+})
+
+# dat_output_rea <- reactive({
+dat_output_rea <- eventReactive(input$do, {
+  # renderPrint({
+  dat_input <- dat_input_rea()
+  knn <- as.numeric(input$knn)
+  dist_measures <- input$dist_measures
+  dist_measure_final <- input$dist_measure_final
+  # source(here::here("inst/app/6-model.R"), local = TRUE)
+  source("6-model.R", local = TRUE)
+  # # dat_result_unique[[1]]$output
+  # model_result_render(model_result_gathered)
+  # options = list(scrollX = TRUE)
+  model_result_gathered
+})
+```
+
+## Outputs {.tabset}
+
+### Ensemble prediction table
+
+```{r echo=FALSE}
+
+renderDataTable({
+  dat_output_rea()$prediction_ensemble
+}, options = list(scrollX = TRUE))
+```
+
+### Raw prediction table
+
+```{r echo=FALSE}
+renderDataTable({
+  dat_output_rea()$prediction
+}, options = list(scrollX = TRUE))
+```
+
+### Input table
+
+```{r echo=FALSE}
+renderDataTable({
+  dat_output_rea()$input
+}, options = list(scrollX = TRUE))
+
+```

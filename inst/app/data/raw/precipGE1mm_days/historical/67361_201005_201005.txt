@@ -1,0 +1,3 @@
+Jahr;Jan;Feb;Mrz;Apr;Mai;Jun;Jul;Aug;Sep;Okt;Nov;Dez
+2010;;;;;3.0;;;;;;;
+

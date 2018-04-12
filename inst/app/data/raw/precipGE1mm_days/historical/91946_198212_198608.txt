@@ -1,0 +1,4 @@
+Jahr;Jan;Feb;Mrz;Apr;Mai;Jun;Jul;Aug;Sep;Okt;Nov;Dez
+1982;;;;;;;;;;;;14.0
+1986;;;;;;13.0;7.0;10.0;;;;
+
