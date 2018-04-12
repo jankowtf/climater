@@ -1,10 +1,13 @@
 ---
 title: "climater app"
-subtitle: "v0.0.0.9000"
 author: "Janko Thyson"
-date: "2018-04-12"
+date: '2018-04-12'
 output: html_document
 runtime: shiny
+subtitle: v0.0.0.9000
+resource_files:
+- data/tidy/db_v3.rds
+- data/tidy/db_v3.rds
 ---
 
 ```{r setup, include=FALSE}
