@@ -1,0 +1,12 @@
+name: climater_app
+title: climater_app
+username:
+account: janko-thyson
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 320587
+bundleId: 1315305
+url: https://janko-thyson.shinyapps.io/climater_app/
+when: 1523533489.6287
+asMultiple: FALSE
+asStatic: FALSE

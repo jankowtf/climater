@@ -1,0 +1,48 @@
+---
+title: "Sanity checks: station IDs"
+subtitle: 'Data version: v2'
+author: "Janko Thyson"
+date: "11 April 2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+devtools::load_all(here::here())
+# library(climater)
+library(tidyverse)
+```
+
+## Hypothesis
+
+Mismatches in station ID structures between `dat_station` and
+`dat_join_full` are reduced to 158 cases compared to data version `v1`.
+
+## Load data 
+
+```{r}
+dat_join_full <- data_read_join_full(vsn = "v2") 
+dat_station <- data_read_station(dtype = "tidy", vsn = "v2")
+```
+
+## Anti joins
+
+```{r}
+# IDs present in 'dat_join_full' but not in 'dat_station' -----
+ajoin_1 <- dat_join_full %>% anti_join(dat_station, by = "dim_station")
+ajoin_1_ids <- ajoin_1$dim_station %>% unique
+# IDs present in 'dat_station' but not in 'dat_join_full'-----
+ajoin_2 <- dat_station %>% anti_join(dat_join_full, by = "dim_station")
+ajoin_2_ids <- ajoin_2$dim_station %>% unique
+
+ajoin_ids_total <- length(ajoin_1_ids) + length(ajoin_2_ids)
+```
+
+In total, there are `r ajoin_ids_total` mismatches in
+station IDs
+
+## Conclusions
+
+* Hypothesis supported
