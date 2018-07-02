@@ -4,16 +4,16 @@
 # https://www.kompf.de/gps/distcalc.html
 compute_geo_distance <- function(p_1, p_2) {
   dist <- 6378.388 * acos(
-    sin(p_1$dim_latitude) * sin(p_2$dim_latitude) +
-      cos(p_1$dim_latitude) * cos(p_2$dim_latitude) *
-      cos(p_1$dim_longitude - p_2$dim_longitude))
+    sin(p_1$dim_latitude*pi/180) * sin(p_2$dim_latitude*pi/180) +
+      cos(p_1$dim_latitude*pi/180) * cos(p_2$dim_latitude*pi/180) *
+      cos(p_1$dim_longitude*pi/180 - p_2$dim_longitude*pi/180))
 }
 
 compute_geo_distance_v2 <- function(p_1, p_2) {
   dist <- 6378.388 * acos(
-    sin(p_1[ , "dim_latitude"]) * sin(p_2[ , "dim_latitude"]) +
-      cos(p_1[ , "dim_latitude"]) * cos(p_2[ , "dim_latitude"]) *
-      cos(p_1[ , "dim_longitude"] - p_2[ , "dim_longitude"]))
+    sin(pi/180*p_1[ , "dim_latitude"]) * sin(pi/180*p_2[ , "dim_latitude"]) +
+      cos(pi/180*p_1[ , "dim_latitude"]) * cos(pi/180*p_2[ , "dim_latitude"]) *
+      cos(pi/180*p_1[ , "dim_longitude"] - pi/180*p_2[ , "dim_longitude"]))
   names(dist) <- "msr_distance"
   dist
 
