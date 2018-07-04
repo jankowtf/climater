@@ -15,9 +15,10 @@ settings <- list(
     # data_version = "v1"
     # data_version = "v2"
     # -> normalization of station IDs (4-digit to 5-digit)
-    data_version = "v3"
+    data_version = "v3",
     # -> imputation of missing values (via simputation::impute_lm with
     # sequential models)
+    frontend_version = "v0.0.0.9002"
   ),
   data_repo = list(
     repo_1 = "C:/users/janko/dropbox (personal)/data/climater",

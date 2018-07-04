@@ -104,7 +104,24 @@ data_tidy_sunshine_duration_v2 <- function(dat) {
   # # Mutate 4-digits IDS to 5-digit IDs
   # dat <- data_trans_normalize_station_id(dat = dat)
 
+  # Abs to get rid of negative values
+
+
   dat
+}
+
+data_tidy_sunshine_duration_v3 <- function(dat) {
+  # v1 -----
+  dat <- data_tidy_sunshine_duration(dat = dat)
+
+  # V2 ----
+  # Nothing really happens anymore (actually obsolete)
+
+  # V3 ----
+  # Abs to get rid of negative values
+
+  dat %>%
+    purrr::modify_at(c("msr_sundur_month_avg", "msr_sundur_day_avg"), abs)
 }
 
 data_tidy_precipitation <- function(dat) {
@@ -221,8 +238,10 @@ data_trans_sunshine_duration_hours_per_day <- function(dat) {
   )
 
   divide_by_days <- function(msr_sundur_avg, days_per_month, month) {
-    msr_sundur_avg /
-      days_per_month %>% filter(time_month == month) %>% select(days) %>% pull()
+    round(msr_sundur_avg /
+      (days_per_month %>%
+      filter(time_month == month) %>%
+          select(days) %>% pull()) * 24)
   }
 
   dat <- dat %>% group_by(time_month) %>%

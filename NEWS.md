@@ -24,3 +24,13 @@
 * Added `dim_station` to `dat_db_msr` via `data_trans_db_msr_v2`
 * Aligned `/inst/app/8-app.Rmd` to new functionality for distances and took out
 some blocks that are currently irrelevant
+
+# climtater 0.0.0.9007
+
+* Updated version number in `DESCRIPTION`
+* Added `frontend_version` to settings/versions (`/inst/app/0-settings.R`)
+* Fixed transformation bug for `dat_sundur` (added `* 24` in order to compute values on "hours per day" scale instead of on "day per day" scale). Also rounded to full integers.
+* Added `floor()` and `ceiling()` to inputs in frontend to make user-facing values nicer
+* Hard-coded inputs for `msr_sundur_avg` to range between 0 and 28 with `step = 4` upon user request
+* Fixed mapping bug regarding temp_max data 
+* Fixed negative sundur values by applying `abs()` via `data_tidy_sunshine_duration_v3`

@@ -4,7 +4,7 @@ author: "Janko Thyson"
 date: '2018-04-12'
 output: html_document
 runtime: shiny
-subtitle: v0.0.0.9001
+subtitle: v0.0.0.9002
 resource_files:
 - data/tidy/db_v3.rds
 - data/tidy/db_v3.rds
@@ -61,40 +61,43 @@ inputPanel(
     choices = 1:12, selected = 7),
   
   sliderInput("msr_temp_min", label = "Min. temperature",
-    min = min(dat_db_0$msr_temp_min, na.rm = TRUE), 
-    max = max(dat_db_0$msr_temp_min, na.rm = TRUE), 
+    min = min(dat_db_0$msr_temp_min, na.rm = TRUE) %>% floor(), 
+    max = max(dat_db_0$msr_temp_min, na.rm = TRUE) %>% ceiling(), 
     value = mean(dat_db_0$msr_temp_min, na.rm = TRUE), step = 0.5),
   
   sliderInput("msr_temp_max", label = "Max. temperature",
-    min = min(dat_db_0$msr_temp_max, na.rm = TRUE),
-    max = max(dat_db_0$msr_temp_max, na.rm = TRUE), 
+    min = min(dat_db_0$msr_temp_max, na.rm = TRUE) %>% floor(),
+    max = max(dat_db_0$msr_temp_max, na.rm = TRUE) %>% ceiling(), 
     value = mean(dat_db_0$msr_temp_min, na.rm = TRUE), step = 0.5),
   
   # sliderInput("msr_temp_avg", label = "Avg. temperature",
-  #   min = min(dat_db_0$msr_temp_avg, na.rm = TRUE), 
-  #   max = max(dat_db_0$msr_temp_avg, na.rm = TRUE), 
+  #   min = min(dat_db_0$msr_temp_avg, na.rm = TRUE) %>% floor(), 
+  #   max = max(dat_db_0$msr_temp_avg, na.rm = TRUE) %>% ceiling(), 
   #   value = mean(dat_db_0$msr_temp_avg, na.rm = TRUE), step = 0.5),
   
   # sliderInput("msr_precip_min", label = "Min. precipitation",
-  #   min = min(dat_db_0$msr_precip_min, na.rm = TRUE), 
-  #   max = max(dat_db_0$msr_precip_min, na.rm = TRUE), 
+  #   min = min(dat_db_0$msr_precip_min, na.rm = TRUE) %>% floor(), 
+  #   max = max(dat_db_0$msr_precip_min, na.rm = TRUE) %>% ceiling(), 
   #   value = mean(dat_db_0$msr_precip_min, na.rm = TRUE), step = 0.5),
   # 
   # sliderInput("msr_precip_max", label = "Max. precipitation",
-  #   min = min(dat_db_0$msr_precip_max, na.rm = TRUE),
-  #   max = max(dat_db_0$msr_precip_max, na.rm = TRUE),
+  #   min = min(dat_db_0$msr_precip_max, na.rm = TRUE) %>% floor(),
+  #   max = max(dat_db_0$msr_precip_max, na.rm = TRUE) %>% ceiling(),
   #   # value = mean(dat_db_0$msr_precip_min, na.rm = TRUE), 
   #   value = 10,
   #   step = 0.5),
   
   sliderInput("msr_precip_avg", label = "Rain days per month",
-    min = min(dat_db_0$msr_precip_avg, na.rm = TRUE),
-    max = max(dat_db_0$msr_precip_avg, na.rm = TRUE), value = 10, step = 0.5),
+    min = min(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% floor(),
+    max = max(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% ceiling(), 
+    value = 10, step = 1),
   
   sliderInput("msr_sundur_avg", label = "Sunshine hours per day",
-    min = min(dat_db_0$msr_sundur_avg, na.rm = TRUE), 
-    max = max(dat_db_0$msr_sundur_avg, na.rm = TRUE),
-    value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE), step = 0.5),
+    # min = min(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% floor(), 
+    min = 0, 
+    # max = max(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% ceiling(),
+    max = 28,
+    value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE), step = 4),
   
   sliderInput("msr_distance", label = "Distance to destination",
     min = 0,

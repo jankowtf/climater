@@ -209,7 +209,7 @@ data_read_temperature_max_v2 <- function(
     Nov = "numeric",
     Dez = "numeric"
   )
-  dat_read_generic(con_fun = data_con_temperature_min,
+  dat_read_generic(con_fun = data_con_temperature_max,
     dtype = dtype, vsn = vsn, col_types = col_types, settings = settings)
 }
 
