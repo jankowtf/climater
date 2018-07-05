@@ -76,12 +76,22 @@ model_estimate_distances_v2 <- function(
     dat_input_row <- dat_input[row_user, , drop = FALSE]
 
     # Distances -----
+    dat_distance_geo <- data.frame(
+      dim_station = unique(dat_station$dim_station),
+      msr_distance = NA
+    )
+
     cols <- c("dim_latitude", "dim_longitude", "msr_distance")
     if (all(cols %in% colnames(dat_input_row))) {
       # dat_input_row <- as.matrix(dat_input)
       msr_distance <- compute_geo_distance_v2(p_1 = dat_input_row, p_2 = dat_station)
       msr_distance$dim_station <- dat_station$dim_station
       dat_db <- left_join(dat_db, msr_distance, by = "dim_station")
+      dat_distance_geo <- dat_db %>%
+        select(dim_station, msr_distance) %>%
+        group_by(dim_station) %>%
+        summarise(msr_distance = unique(msr_distance)) %>%
+        ungroup()
     }
     dat_db <- dat_db %>%
       select(-matches("dim_")) %>%
@@ -126,6 +136,13 @@ model_estimate_distances_v2 <- function(
       )
       res[!sapply(res, is.null)]
     })
+
+    list(
+      distance_stat = ret,
+      dat_distance_geo = dat_distance_geo
+    )
+    # TODO-20180705: tidyfy column name
+
   })
 }
 
@@ -152,6 +169,38 @@ model_predict_index_distances <- function(
     names(res) <- dist_measures
     res
   })
+}
+
+model_predict_index_distances_v2 <- function(
+  model_estimation,
+  knn = 3
+) {
+  # Get names of computed distance measures -----
+  dist_measures <- names(model_estimation[[1]]$distance_stat[[1]])
+  # TODO-20180705: make this nicer/more robust
+
+  model_prediction <- lapply(model_estimation, function(estimation) {
+    index <- lapply(dist_measures, function(mea) {
+      # Select particular distance measure result for all stations -----
+      values <- sapply(estimation$distance_stat, "[[", mea)
+      names(values) <- 1:length(values)
+
+      # Sort estimation results -----
+      # values <- sort(values[values != 0])
+      values <- sort(values)
+
+      # Select best predictions based on knn -----
+      as.numeric(names(values[1:knn]))
+    })
+    names(index) <- dist_measures
+
+    list(
+      distance_stat_index = index,
+      dat_distance_geo = estimation$dat_distance_geo
+    )
+  })
+
+  model_prediction
 }
 
 model_predict_distances <- function(
@@ -253,7 +302,7 @@ model_predict_distances_v2 <- function(
     as.matrix()
 
   dat_result <- lapply(1:length(model_prediction_index), function(idx_input) {
-    choice <- model_prediction_index[[idx_input]]
+    choice <- model_prediction_index[[idx_input]]$distance_stat_index
     dist_meassure <- unlist(lapply(names(choice), rep, knn))
     index <- unlist(choice)
 
@@ -285,16 +334,23 @@ model_predict_distances_v2 <- function(
 
     dat_prediction <- dat_prediction %>% mutate_if(is.double, round, 1)
 
+    dat_distance_geo <- model_prediction_index[[idx_input]]$dat_distance_geo
+
     # Join stations -----
     dat_prediction_2 <- inner_join(
       dat_prediction,
       dat_station,
       by = "dim_station"
     ) %>%
+      left_join(
+        dat_distance_geo,
+        by = "dim_station"
+      ) %>%
       select(
         dim_rank,
         dim_country,
         dim_station_name,
+        msr_distance,
         time_month,
         diff_time_month,
         msr_temp_min,

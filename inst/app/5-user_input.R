@@ -26,7 +26,8 @@ ref_location <- dat_station %>%
   select(-dim_station)
 dat_input$dim_latitude <- ref_location$dim_latitude
 dat_input$dim_longitude <- ref_location$dim_longitude
-dat_input$msr_distance <- 1.5
+dat_input$msr_distance <- 100
+dat_input <- dat_input %>% select(-dim_station)
 
 # Alternative input -----
 
