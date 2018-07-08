@@ -18,7 +18,7 @@ settings <- list(
     data_version = "v3",
     # -> imputation of missing values (via simputation::impute_lm with
     # sequential models)
-    frontend_version = "v0.0.0.9002"
+    frontend_version = "v0.0.0.9003"
   ),
   data_repo = list(
     repo_1 = "C:/users/janko/dropbox (personal)/data/climater",
@@ -82,7 +82,9 @@ settings <- list(
   name_mapping = list(
     station = list(
       key = dplyr::quo(station),
-      label = list()
+      label = list(
+        label_1 = "Location"
+      )
     ),
     station_ref = list(
       key = dplyr::quo(station_ref),
@@ -96,17 +98,21 @@ settings <- list(
       key = dplyr::quo(time_stop),
       label = list()
     ),
-    time_month = list(
-      key = dplyr::quo(time_month),
-      label = list()
-    ),
     time_type = list(
       key = dplyr::quo(time_type),
       label = list()
     ),
     msr_precip_avg = list(
       key = dplyr::quo(msr_precip_avg),
-      label = list()
+      label = list(
+        label_1 = "Rain days per month (avg.)"
+      )
+    ),
+    precip = list(
+      key = dplyr::quo(precip),
+      label = list(
+        label_1 = "Rain days per month"
+      )
     ),
     temp = list(
       key = dplyr::quo(temp),
@@ -114,32 +120,139 @@ settings <- list(
     ),
     temp_min = list(
       key = dplyr::quo(temp_min),
-      label = list()
+      label = list(
+        label_1 = "Min. temperature"
+      )
     ),
     temp_max = list(
       key = dplyr::quo(temp_max),
-      label = list()
-    ),
-    precip = list(
-      key = dplyr::quo(precip),
-      label = list()
+      label = list(
+        label_1 = "Max. temperature"
+      )
     ),
     sundur = list(
       key = dplyr::quo(sundur),
-      label = list()
+      label = list(
+        label_1 = "Sunshine hours per day"
+      )
     ),
     latitude = list(
       key = dplyr::quo(latitude),
-      label = list()
+      label = list(
+        label_1 = "Latitude"
+      )
     ),
     longitude = list(
       key = dplyr::quo(longitude),
-      label = list()
+      label = list(
+        label_1 = "Longitude"
+      )
     ),
     distance = list(
       key = dplyr::quo(distance),
-      label = list()
+      label = list(
+        label_1 = "Distance"
+      )
+    ),
+
+    # Restart 2018-07-08 -----
+    dim_rank = list(
+      key = dplyr::quo(dim_rank),
+      label = list(
+        label_1 = "Rank"
+      )
+    ),
+    dim_country = list(
+      key = dplyr::quo(dim_country),
+      label = list(
+        label_1 = "Country"
+      )
+    ),
+    dim_station_name = list(
+      key = dplyr::quo(dim_station_name),
+      label = list(
+        label_1 = "Location"
+      )
+    ),
+    msr_distance = list(
+      key = dplyr::quo(msr_distance),
+      label = list(
+        label_1 = "Distance"
+      )
+    ),
+    time_month = list(
+      key = dplyr::quo(time_month),
+      label = list(
+        label_1 = "Month"
+      )
+    ),
+    diff_time_month = list(
+      key = dplyr::quo(time_month_diff),
+      label = list(
+        label_1 = "Month delta"
+      )
+    ),
+    msr_temp_min = list(
+      key = dplyr::quo(msr_temp_min),
+      label = list(
+        label_1 = "Min. temperature"
+      )
+    ),
+    diff_msr_temp_min = list(
+      key = dplyr::quo(msr_temp_min_diff),
+      label = list(
+        label_1 = "Min. temperature delta"
+      )
+    ),
+    msr_temp_max = list(
+      key = dplyr::quo(msr_temp_max),
+      label = list(
+        label_1 = "Max. temperature"
+      )
+    ),
+    diff_msr_temp_max = list(
+      key = dplyr::quo(msr_temp_max_diff),
+      label = list(
+        label_1 = "Max. temperature delta"
+      )
+    ),
+    msr_temp_avg = list(
+      key = dplyr::quo(msr_temp_avg),
+      label = list(
+        label_1 = "Avg. temperature"
+      )
+    ),
+    diff_msr_temp_avg = list(
+      key = dplyr::quo(msr_temp_avg_diff),
+      label = list(
+        label_1 = "Avg. temperature delta"
+      )
+    ),
+    msr_precip_avg = list(
+      key = dplyr::quo(msr_precip_avg),
+      label = list(
+        label_1 = "Rain days per month"
+      )
+    ),
+    diff_msr_precip_avg = list(
+      key = dplyr::quo(msr_precip_avg_diff),
+      label = list(
+        label_1 = "Rain days per month delta"
+      )
+    ),
+    msr_sundur_avg = list(
+      key = dplyr::quo(msr_sundur_avg),
+      label = list(
+        label_1 = "Sunshine hours per day"
+      )
+    ),
+    diff_msr_sundur_avg = list(
+      key = dplyr::quo(msr_sundur_avg_diff),
+      label = list(
+        label_1 = "Sunshine hours per day delta"
+      )
     )
   )
 )
+
 

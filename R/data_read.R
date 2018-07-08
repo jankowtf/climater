@@ -254,7 +254,7 @@ data_read_sunshine_duration_v2 <- function(
     Nov = "numeric",
     Dez = "numeric"
   )
-  dat_read_generic(con_fun = data_con_temperature_min,
+  dat_read_generic(con_fun = data_con_sunshine_duration,
     dtype = dtype, vsn = vsn, col_types = col_types, settings = settings)
 }
 
@@ -338,7 +338,7 @@ data_read_precipitation_recent_v2 <- function(
     Dez = "numeric"
   )
   dat_read_x_generic(
-    data_con = data_con_precipitation_historical,
+    data_con = data_con_precipitation_recent,
     dtype = dtype,
     vsn = vsn,
     col_types = col_types,

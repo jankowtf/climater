@@ -45,3 +45,14 @@ values nicer
 * Restructured frontend a bit to vsually separate the different input blocks 
 * Modified modelling functions (`/R/modelling.R`) to include on-the-fly
 computations of geo distance in output table
+
+# climater 0.0.0.9008
+
+* Fixed wrong data con link for `sundur`
+* Rolled back incorrect transformations of `sundur` that was caused by the wrong
+data link above
+* Implemented key-to-label mapping
+(`R/data_transform.R/dat_transform_names_to_label`) and use labels in prediction
+table
+* Update frontend version to v0.0.0.9003
+

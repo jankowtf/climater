@@ -50,12 +50,8 @@ dat_sundur <- data_tidy_sunshine_duration(dat_sundur)
 data_write_sunshine_duration(dat_sundur)
 
 # v2 -----
-# dat_sundur <- data_read_sunshine_duration_v2(dtype = "raw")
-# dat_sundur <- data_tidy_sunshine_duration_v2(dat_sundur)
-# data_write_sunshine_duration(dat_sundur, vsn = data_version)
-
 dat_sundur <- data_read_sunshine_duration_v2(dtype = "raw")
-dat_sundur <- data_tidy_sunshine_duration_v3(dat_sundur)
+dat_sundur <- data_tidy_sunshine_duration_v2(dat_sundur)
 data_write_sunshine_duration(dat_sundur, vsn = data_version)
 
 # Precipitation -----------------------------------------------------------

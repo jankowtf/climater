@@ -4,7 +4,7 @@ author: "Janko Thyson"
 date: '2018-04-12'
 output: html_document
 runtime: shiny
-subtitle: v0.0.0.9002
+subtitle: v0.0.0.9003
 resource_files:
 - data/tidy/db_v3.rds
 - data/tidy/db_v3.rds
@@ -56,6 +56,13 @@ dat_distance <- reactive({
 dist_measure <- "euclidean"
 dist_measure_final <- dist_measure
 
+# input_precip <- reactive({
+#   prettyNum(seq(
+#     from = min(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% floor(),
+#     to = max(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% ceiling(),
+#     by = 4), big.mark = ",")
+# })
+
 inputPanel(
   radioButtons("use_geo_auto", label = "Automatically detect location", 
     choices = c("yes", "no"), selected = "no", inline = TRUE),
@@ -73,10 +80,10 @@ inputPanel(
     max = 1000,
     value = 100, step = 1),
   
-  # selectInput("time_month", label = "Month of year",
-  #   choices = 1:12, selected = 7),
-  sliderInput("time_month", label = "Month of year",
-    min = 1, max = 12, value = 7, step = 1),
+  selectInput("time_month", label = "Month of year",
+    choices = 1:12, selected = 7),
+  # sliderInput("time_month", label = "Month of year",
+  #   min = 1, max = 12, value = 7, step = 1),
   
   sliderInput("msr_temp_min", label = "Min. temperature",
     min = min(dat_db_0$msr_temp_min, na.rm = TRUE) %>% floor(), 
@@ -110,12 +117,16 @@ inputPanel(
     max = max(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% ceiling(),
     value = 10, step = 1),
   
+  # shinyWidgets::sliderTextInput("msr_precip_avg", label = "Rain days per month",
+  #   choices = input_precip(),
+  #   selected = 0, grid = TRUE),
+  
   sliderInput("msr_sundur_avg", label = "Sunshine hours per day",
-    # min = min(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% floor(),
-    min = 0,
-    # max = max(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% ceiling(),
-    max = 28,
-    value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE), step = 4)
+    min = min(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% floor(),
+    # min = 0,
+    max = max(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% ceiling(),
+    # max = 28,
+    value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE), step = 1)
 )
 
 inputPanel(
@@ -236,30 +247,10 @@ renderDataTable({
 
 ```{r echo=FALSE}
 renderDataTable({
-  this <- dat_output_rea()$prediction 
-  # print(this)
-  # this %>%
-  #   dplyr::select(
-  #     dim_rank,
-  #     dim_country,
-  #     dim_station_name,
-  #     msr_distance,
-  #     # dim_latitude,
-  #     # dim_longitude,
-  #     time_month,
-  #     diff_time_month,
-  #     msr_temp_min,
-  #     diff_msr_temp_min,
-  #     msr_temp_max,
-  #     diff_msr_temp_max,
-  #     # msr_temp_avg,
-  #     # msr_precip_min,
-  #     # msr_precip_max,
-  #     msr_precip_avg,
-  #     diff_msr_precip_avg,
-  #     msr_sundur_avg,
-  #     diff_msr_sundur_avg
-  #   )
+  this <- dat_output_rea()$prediction %>%  
+    dat_transform_relevant_columns() %>% 
+    dat_transform_names_to_label()
+  
 }, options = list(scrollX = TRUE))
 # TODO-20180705: encapsulate column selection in own function to be more
 # flexible and make code easier to maintain

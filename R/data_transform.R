@@ -110,20 +110,6 @@ data_tidy_sunshine_duration_v2 <- function(dat) {
   dat
 }
 
-data_tidy_sunshine_duration_v3 <- function(dat) {
-  # v1 -----
-  dat <- data_tidy_sunshine_duration(dat = dat)
-
-  # V2 ----
-  # Nothing really happens anymore (actually obsolete)
-
-  # V3 ----
-  # Abs to get rid of negative values
-
-  dat %>%
-    purrr::modify_at(c("msr_sundur_month_avg", "msr_sundur_day_avg"), abs)
-}
-
 data_tidy_precipitation <- function(dat) {
   dat <- data_tidy_generic(dat)
   dat <- data_trans_precipitation(dat)
@@ -241,7 +227,8 @@ data_trans_sunshine_duration_hours_per_day <- function(dat) {
     round(msr_sundur_avg /
       (days_per_month %>%
       filter(time_month == month) %>%
-          select(days) %>% pull()) * 24)
+          # select(days) %>% pull()) * 24)
+          select(days) %>% pull()))
   }
 
   dat <- dat %>% group_by(time_month) %>%
@@ -707,3 +694,46 @@ data_trans_db_msr_v2 <- function(dat_base) {
     select(-matches("med"))
 }
 
+dat_transform_relevant_columns <- function(dat) {
+  dat <- dat %>%
+    dplyr::select(
+      dim_rank,
+      dim_country,
+      dim_station_name,
+      msr_distance,
+      # dim_latitude,
+      # dim_longitude,
+      time_month,
+      diff_time_month,
+      msr_temp_min,
+      diff_msr_temp_min,
+      msr_temp_max,
+      diff_msr_temp_max,
+      msr_precip_avg,
+      diff_msr_precip_avg,
+      msr_sundur_avg,
+      diff_msr_sundur_avg
+    )
+}
+
+dat_transform_names_to_label <- function(
+  dat,
+  settings = default_settings()
+) {
+  mapping_info <- settings$name_mapping
+  mapping_info <- mapping_info[names(mapping_info) %in% names(dat)]
+  df_mapping <- mapping_info %>% purrr::map("label") %>% purrr::map_df("label_1") %>%
+    t() %>% as.data.frame() %>% tibble::rownames_to_column() %>%
+    select(key = rowname, label = V1) %>%
+    mutate(label = as.character(label))
+
+  df_keys <- dat %>%
+    names() %>%
+    data.frame(stringsAsFactors = FALSE) %>%
+    dplyr::select(key = ".")
+
+  df_labels <- left_join(df_keys, df_mapping, by = "key")
+  names(dat) <- df_labels %>% dplyr::pull(label)
+
+  dat
+}
