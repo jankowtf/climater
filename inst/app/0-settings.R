@@ -22,7 +22,7 @@ settings <- list(
   ),
   data_repo = list(
     repo_1 = "C:/users/janko/dropbox (personal)/data/climater",
-    repo_2 = "~/data/climater"
+    repo_2 = "C:/users/Sebastian/climater"
   ),
   # -> sets the data version to be used
   # Backend settings >> DO NOT CHANGE -----
