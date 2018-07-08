@@ -123,10 +123,8 @@ inputPanel(
   
   sliderInput("msr_sundur_avg", label = "Sunshine hours per day",
     min = min(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% floor(),
-    # min = 0,
     max = max(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% ceiling(),
-    # max = 28,
-    value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE), step = 1)
+    value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE), step = 1, ticks = FALSE)
 )
 
 inputPanel(
