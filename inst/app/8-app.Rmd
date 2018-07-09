@@ -4,7 +4,7 @@ author: "Janko Thyson"
 date: '2018-04-12'
 output: html_document
 runtime: shiny
-subtitle: v0.0.0.9003
+subtitle: v0.0.0.9004
 resource_files:
 - data/tidy/db_v3.rds
 - data/tidy/db_v3.rds
@@ -78,7 +78,9 @@ inputPanel(
   sliderInput("msr_distance", label = "Max. distance to destination",
     min = 0,
     max = 1000,
-    value = 100, step = 1),
+    value = 100, 
+    step = 1,
+    ticks = FALSE),
   
   selectInput("time_month", label = "Month of year",
     choices = 1:12, selected = 7),
@@ -88,34 +90,45 @@ inputPanel(
   sliderInput("msr_temp_min", label = "Min. temperature",
     min = min(dat_db_0$msr_temp_min, na.rm = TRUE) %>% floor(), 
     max = max(dat_db_0$msr_temp_min, na.rm = TRUE) %>% ceiling(), 
-    value = mean(dat_db_0$msr_temp_min, na.rm = TRUE), step = 0.5),
+    value = mean(dat_db_0$msr_temp_min, na.rm = TRUE), 
+    step = 0.5,
+    ticks = FALSE),
   
   sliderInput("msr_temp_max", label = "Max. temperature",
     min = min(dat_db_0$msr_temp_max, na.rm = TRUE) %>% floor(),
     max = max(dat_db_0$msr_temp_max, na.rm = TRUE) %>% ceiling(), 
-    value = mean(dat_db_0$msr_temp_min, na.rm = TRUE), step = 0.5),
+    value = mean(dat_db_0$msr_temp_min, na.rm = TRUE), 
+    step = 0.5,
+    ticks = FALSE),
   
   # sliderInput("msr_temp_avg", label = "Avg. temperature",
   #   min = min(dat_db_0$msr_temp_avg, na.rm = TRUE) %>% floor(),
   #   max = max(dat_db_0$msr_temp_avg, na.rm = TRUE) %>% ceiling(),
-  #   value = mean(dat_db_0$msr_temp_avg, na.rm = TRUE), step = 0.5),
+  #   value = mean(dat_db_0$msr_temp_avg, na.rm = TRUE),
+  #   step = 0.5,
+  #   ticks = FALSE),
   
   # sliderInput("msr_precip_min", label = "Min. precipitation",
   #   min = min(dat_db_0$msr_precip_min, na.rm = TRUE) %>% floor(),
   #   max = max(dat_db_0$msr_precip_min, na.rm = TRUE) %>% ceiling(),
-  #   value = mean(dat_db_0$msr_precip_min, na.rm = TRUE), step = 0.5),
+  #   value = mean(dat_db_0$msr_precip_min, na.rm = TRUE), 
+  #   step = 0.5,
+  #   ticks = FALSE),
   #
   # sliderInput("msr_precip_max", label = "Max. precipitation",
   #   min = min(dat_db_0$msr_precip_max, na.rm = TRUE) %>% floor(),
   #   max = max(dat_db_0$msr_precip_max, na.rm = TRUE) %>% ceiling(),
   #   # value = mean(dat_db_0$msr_precip_min, na.rm = TRUE),
   #   value = 10,
-  #   step = 0.5),
+  #   step = 0.5,
+  #   ticks = FALSE),
   
   sliderInput("msr_precip_avg", label = "Rain days per month",
     min = min(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% floor(),
     max = max(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% ceiling(),
-    value = 10, step = 1),
+    value = 10, 
+    step = 1,
+    ticks = FALSE),
   
   # shinyWidgets::sliderTextInput("msr_precip_avg", label = "Rain days per month",
   #   choices = input_precip(),
@@ -124,28 +137,48 @@ inputPanel(
   sliderInput("msr_sundur_avg", label = "Sunshine hours per day",
     min = min(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% floor(),
     max = max(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% ceiling(),
-    value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE), step = 1, ticks = FALSE)
+    value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE), 
+    step = 1, 
+    ticks = FALSE)
 )
 
 inputPanel(
-  shiny::checkboxGroupInput("msr_inputs_chosen", label = "Choose inputs to use",
-    choices = c(
-      "msr_distance",
+  # shiny::checkboxGroupInput("msr_inputs_chosen", label = "Choose inputs to use",
+  #   choices = c(
+  #     "Distance" = "msr_distance",
+  #     # "Max. distance to destination" = "msr_distance",
+  #     "Month" = "time_month",
+  #     "Min. temperature" = "msr_temp_min",
+  #     "Min. temperature" = "msr_temp_max",
+  #     # "msr_temp_avg",
+  #     # "msr_precip_min",
+  #     # "msr_precip_max",
+  #     "Rain days" = "msr_precip_avg",
+  #     "Sunshine hours" = "msr_sundur_avg"
+  #   ),
+  #   selected = c("time_month", "msr_temp_avg")
+  # ),
+  
+  shiny::selectInput("msr_inputs_chosen", label = "Choose inputs to use",
+    choices = list(
+      "Distance" = "msr_distance",
       # "Max. distance to destination" = "msr_distance",
-      "time_month",
-      "msr_temp_min",
-      "msr_temp_max",
+      "Month" = "time_month",
+      "Min. temperature" = "msr_temp_min",
+      "Min. temperature" = "msr_temp_max",
       # "msr_temp_avg",
       # "msr_precip_min",
       # "msr_precip_max",
-      "msr_precip_avg",
-      "msr_sundur_avg"
+      "Rain days" = "msr_precip_avg",
+      "Sunshine hours" = "msr_sundur_avg"
     ),
+    selectize = TRUE,
+    multiple = TRUE,
     selected = c("time_month", "msr_temp_avg")
   ),
   
   selectInput("knn", label = "Number of recommendations",
-    choices = 1:10, selected = 3),
+    choices = 1:50, selected = 3),
   
   # selectInput("dist_measures", label = "Distance measures",
   #   choices = default_dist_measures(), selected = 1, multiple = TRUE),
@@ -258,7 +291,8 @@ renderDataTable({
 
 ```{r echo=FALSE}
 renderDataTable({
-  dat_output_rea()$input
+  dat_output_rea()$input %>% 
+    dat_transform_names_to_label()
 }, options = list(scrollX = TRUE))
 
 ```

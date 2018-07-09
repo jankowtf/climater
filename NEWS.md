@@ -56,3 +56,9 @@ data link above
 table
 * Update frontend version to v0.0.0.9003
 
+# climater 0.0.0.9009
+
+* Removed tick marks from inputs
+* Implemented key-to-label mapping for input selection and display of input table
+* Changed input selection from checkbox to selectize layout
+* Update frontend version to v0.0.0.9004

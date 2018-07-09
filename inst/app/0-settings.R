@@ -18,7 +18,7 @@ settings <- list(
     data_version = "v3",
     # -> imputation of missing values (via simputation::impute_lm with
     # sequential models)
-    frontend_version = "v0.0.0.9003"
+    frontend_version = "v0.0.0.9004"
   ),
   data_repo = list(
     repo_1 = "C:/users/janko/dropbox (personal)/data/climater",
@@ -156,10 +156,28 @@ settings <- list(
     ),
 
     # Restart 2018-07-08 -----
+    input = list(
+      key = dplyr::quo(input),
+      label = list(
+        label_1 = "Input ID"
+      )
+    ),
     dim_rank = list(
       key = dplyr::quo(dim_rank),
       label = list(
         label_1 = "Rank"
+      )
+    ),
+    dim_latitude = list(
+      key = dplyr::quo(dim_latitude),
+      label = list(
+        label_1 = "Latitude"
+      )
+    ),
+    dim_longitude = list(
+      key = dplyr::quo(dim_longitude),
+      label = list(
+        label_1 = "Longitude"
       )
     ),
     dim_country = list(
