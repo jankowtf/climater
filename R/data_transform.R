@@ -636,6 +636,17 @@ data_trans_join_x_v3 <- function(
   # Impute missing values -----
   dat <- data_trans_impute_missing_values(dat)
 
+  # Correct imputed negative values -----
+  modify_fun <- function(x) {
+    x[x < 0] <- 0
+    x
+  }
+  dat <- dat %>% purrr::modify_at(
+    c("msr_precip_min", "msr_precip_max", "msr_precip_avg",
+      "msr_precip_med", "msr_sundur_avg"),
+    modify_fun
+  )
+
   dat
 }
 

@@ -18,7 +18,7 @@ settings <- list(
     data_version = "v3",
     # -> imputation of missing values (via simputation::impute_lm with
     # sequential models)
-    frontend_version = "v0.0.0.9004"
+    frontend_version = "v0.0.0.9005"
   ),
   data_repo = list(
     repo_1 = "C:/users/janko/dropbox (personal)/data/climater",

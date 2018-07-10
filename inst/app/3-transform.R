@@ -37,7 +37,7 @@ dat_precip_recent <- data_read_precipitation_recent(dtype = "tidy",
 
 dat_precip <- data_trans_precipitation_combine(
   dat_hist = dat_precip_hist,
-  dat_recent = dat_precid_recent
+  dat_recent = dat_precip_recent
 )
 
 dat_precip <- dat_precip %>% mutate_if(is.double, round, 1)

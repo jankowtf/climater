@@ -62,3 +62,10 @@ table
 * Implemented key-to-label mapping for input selection and display of input table
 * Changed input selection from checkbox to selectize layout
 * Update frontend version to v0.0.0.9004
+
+# climater 0.0.0.9010
+
+* Changed input selection back to checkboxes
+* Fixed negative values in `msr_precip_*` that were caused by missing value
+imputation
+* Update frontend version to v0.0.0.9005

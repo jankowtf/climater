@@ -1,13 +1,12 @@
 ---
 title: "climater app"
-author: "Janko Thyson"
-date: '2018-04-12'
-output: html_document
-runtime: shiny
-subtitle: v0.0.0.9004
 resource_files:
 - data/tidy/db_v3.rds
 - data/tidy/db_v3.rds
+- db_v3.rds
+runtime: shiny
+output: html_document
+subtitle: v0.0.0.9004
 ---
 
 ```{r setup, include=FALSE}
@@ -34,15 +33,10 @@ if (basename(here::here()) == "climater") {
   source("4-load.R")  
 }
 dat_db_0 <- data_read_db(vsn = "v3")
+# dat_db_0 <- readRDS(here::here("inst/app/db_v3.Rds"))
 ```
 
 ## Inputs
-
-Note:
-
-* `Distance measures` controls on which distance measures the "raw" prediction is based. By default, all distance measures are used, but you can select the ones you want.
-* `Distance measure for ensemble` controls which *single* distance measure should be used in order to produce an "ensemble" prediction (most frequent rank)
-* If only one distance measure is specified in `Distance measure`, then the ensemble predictions are identical to the raw predicitons.
 
 ```{r frontend, echo=FALSE}
 dat_distance <- reactive({
@@ -143,24 +137,8 @@ inputPanel(
 )
 
 inputPanel(
-  # shiny::checkboxGroupInput("msr_inputs_chosen", label = "Choose inputs to use",
-  #   choices = c(
-  #     "Distance" = "msr_distance",
-  #     # "Max. distance to destination" = "msr_distance",
-  #     "Month" = "time_month",
-  #     "Min. temperature" = "msr_temp_min",
-  #     "Max. temperature" = "msr_temp_max",
-  #     # "msr_temp_avg",
-  #     # "msr_precip_min",
-  #     # "msr_precip_max",
-  #     "Rain days" = "msr_precip_avg",
-  #     "Sunshine hours" = "msr_sundur_avg"
-  #   ),
-  #   selected = c("time_month", "msr_temp_avg")
-  # ),
-  
-  shiny::selectInput("msr_inputs_chosen", label = "Choose inputs to use",
-    choices = list(
+  shiny::checkboxGroupInput("msr_inputs_chosen", label = "Choose inputs to use",
+    choices = c(
       "Distance" = "msr_distance",
       # "Max. distance to destination" = "msr_distance",
       "Month" = "time_month",
@@ -172,10 +150,26 @@ inputPanel(
       "Rain days" = "msr_precip_avg",
       "Sunshine hours" = "msr_sundur_avg"
     ),
-    selectize = TRUE,
-    multiple = TRUE,
     selected = c("time_month", "msr_temp_avg")
   ),
+  
+  # shiny::selectInput("msr_inputs_chosen", label = "Choose inputs to use",
+  #   choices = list(
+  #     "Distance" = "msr_distance",
+  #     # "Max. distance to destination" = "msr_distance",
+  #     "Month" = "time_month",
+  #     "Min. temperature" = "msr_temp_min",
+  #     "Max. temperature" = "msr_temp_max",
+  #     # "msr_temp_avg",
+  #     # "msr_precip_min",
+  #     # "msr_precip_max",
+  #     "Rain days" = "msr_precip_avg",
+  #     "Sunshine hours" = "msr_sundur_avg"
+  #   ),
+  #   selectize = TRUE,
+  #   multiple = TRUE,
+  #   selected = c("time_month", "msr_temp_avg")
+  # ),
   
   selectInput("knn", label = "Number of recommendations",
     choices = 1:50, selected = 3),
