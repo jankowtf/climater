@@ -1,8 +1,6 @@
 ---
 title: "climater app"
 resource_files:
-- data/tidy/db_v3.rds
-- data/tidy/db_v3.rds
 - db_v3.rds
 runtime: shiny
 output: html_document
@@ -28,9 +26,9 @@ set_global_data_repo("repo_1", settings = settings)
 # set_global_data_repo("repo_2", settings = settings)
 
 if (basename(here::here()) == "climater") {
-  source(here::here("inst/app/4-load.R"))
+  source(here::here("inst/app/04-load.R"))
 } else {
-  source("4-load.R")  
+  source("04-load.R")  
 }
 dat_db_0 <- data_read_db(vsn = "v3")
 # dat_db_0 <- readRDS(here::here("inst/app/db_v3.Rds"))
@@ -249,7 +247,7 @@ dat_output_rea <- eventReactive(input$do, {
   dist_measure_final <- input$dist_measure_final
   
   if (basename(here::here()) == "climater") {
-    source(here::here("inst/app/6-model.R"), local = TRUE)
+    source(here::here("inst/app/06-model.R"), local = TRUE)
   } else {
     source("6-model.R", local = TRUE)
   }
@@ -260,20 +258,13 @@ dat_output_rea <- eventReactive(input$do, {
 
 ## Outputs {.tabset}
 
-```{r echo=FALSE, eval=FALSE}
-### Ensemble prediction table
-renderDataTable({
-  dat_output_rea()$prediction_ensemble
-  
-}, options = list(scrollX = TRUE))
-```
-
-### Prediction table
+### Recommendations
 
 ```{r echo=FALSE}
 renderDataTable({
   this <- dat_output_rea()$prediction %>%  
     dat_transform_relevant_columns() %>% 
+    dplyr::mutate(msr_distance = msr_distance %>% round(4)) %>% 
     dat_transform_names_to_label()
   
 }, options = list(scrollX = TRUE))
@@ -281,7 +272,7 @@ renderDataTable({
 # flexible and make code easier to maintain
 ```
 
-### Input table
+### Input
 
 ```{r echo=FALSE}
 renderDataTable({

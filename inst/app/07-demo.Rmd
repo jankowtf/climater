@@ -16,7 +16,7 @@ library(dplyr)
 ## Main script
 
 Note that the actual main script that executes a particular "app usage run" can
-be found at `/inst/app/1-main.R`.
+be found at `/inst/app/01-main.R`.
 
 The following code simply serves as a more illustrative explanation of how the
 individual app parts are linked to each other
@@ -31,7 +31,7 @@ set_global_data_repo("repo_1", settings = settings)
 ## Load DB data
 
 ```{r load}
-source(here::here("inst/app/4-load.R"))
+source(here::here("inst/app/04-load.R"))
 ```
 
 This script loads the following three data objects:
@@ -53,7 +53,7 @@ dat_station %>% head()
 ## Example user input
 
 ```{r user_input}
-source(here::here("inst/app/5-user_input.R"))
+source(here::here("inst/app/05-user_input.R"))
 ```
 
 Open script `inst/app/5-user_input.R` to change the example user input
@@ -80,7 +80,7 @@ dat_input %>% head()
 Actual estimation and prediction based on distance measures
 
 ```{r recommendation}
-source(here::here("inst/app/6-model.R"))
+source(here::here("inst/app/06-model.R"))
 ```
 
 ### Estimation object: raw

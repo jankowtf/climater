@@ -27,7 +27,7 @@ default_version <- function() {
 #' @importFrom dplyr quo
 #' @export
 default_settings <- function() {
-  source(here::here("inst/app/0-settings.R"))$value
+  source(here::here("inst/app/00-settings.R"))$value
 }
 
 #' @export
