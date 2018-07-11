@@ -69,6 +69,6 @@ table
 * Fixed negative values in `msr_precip_*` that were caused by missing value
 imputation via `data_trans_impute_missing_values()`
 * Rounded distances to 4 digits
-* Update frontend version to v0.0.0.9005
+* Update frontend version to v0.0.0.9004
 * Experimental version of deployable app script for shinyapps.io (`/inst/app/10-app_deployed.Rmd`)
 * Change ennumeration of scripts to double digits
