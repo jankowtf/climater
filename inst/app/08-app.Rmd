@@ -4,7 +4,7 @@ resource_files:
 - db_v3.rds
 runtime: shiny
 output: html_document
-subtitle: v0.0.0.9004
+subtitle: v0.0.0.9010
 ---
 
 ```{r setup, include=FALSE}
@@ -22,8 +22,8 @@ if (basename(here::here()) == "climater") {
 
 settings <- default_settings()
 settings$output$show <- FALSE
-set_global_data_repo("repo_1", settings = settings)
-# set_global_data_repo("repo_2", settings = settings)
+#set_global_data_repo("repo_1", settings = settings)
+set_global_data_repo("repo_2", settings = settings)
 
 if (basename(here::here()) == "climater") {
   source(here::here("inst/app/04-load.R"))
@@ -67,7 +67,7 @@ inputPanel(
 )
 
 inputPanel(
-  sliderInput("msr_distance", label = "Max. distance to destination",
+  sliderInput("msr_distance", label = "Max. distance to destination (km)",
     min = 0,
     max = 1000,
     value = 100, 
@@ -79,14 +79,14 @@ inputPanel(
   # sliderInput("time_month", label = "Month of year",
   #   min = 1, max = 12, value = 7, step = 1),
   
-  sliderInput("msr_temp_min", label = "Min. temperature",
+  sliderInput("msr_temp_min", label = "Min. temperature (°C)",
     min = min(dat_db_0$msr_temp_min, na.rm = TRUE) %>% floor(), 
     max = max(dat_db_0$msr_temp_min, na.rm = TRUE) %>% ceiling(), 
     value = mean(dat_db_0$msr_temp_min, na.rm = TRUE), 
     step = 0.5,
     ticks = FALSE),
   
-  sliderInput("msr_temp_max", label = "Max. temperature",
+  sliderInput("msr_temp_max", label = "Max. temperature (°C)",
     min = min(dat_db_0$msr_temp_max, na.rm = TRUE) %>% floor(),
     max = max(dat_db_0$msr_temp_max, na.rm = TRUE) %>% ceiling(), 
     value = mean(dat_db_0$msr_temp_min, na.rm = TRUE), 
@@ -207,9 +207,12 @@ observe({
   input$geo_lat_auto
   updateSliderInput(session, "msr_distance",
     value = round(mean(dat_distance(), na.rm = TRUE)),
-    min = min(dat_distance(), na.rm = TRUE),
-    max = max(dat_distance(), na.rm = TRUE),
-    step = 1
+    min=0,
+    max=19000,
+    step=500
+#    min = min(dat_distance(), na.rm = TRUE),
+#    max = max(dat_distance(), na.rm = TRUE),
+#    step = 1
   )
 })
 
