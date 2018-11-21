@@ -4,3 +4,4 @@
 .Ruserdata
 *.Rds
 *.tar.gz
+packrat/lib*/

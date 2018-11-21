@@ -279,7 +279,6 @@ renderDataTable({
   dat_output_rea()$input %>% 
     dat_transform_names_to_label()
 }, options = list(scrollX = TRUE))
-
 ```
 
 ### Geo location

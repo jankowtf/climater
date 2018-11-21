@@ -4,3 +4,5 @@
 ^revdep$
 ^\.travis\.yml$
 ^codecov\.yml$
+^packrat/
+^\.Rprofile$

@@ -1,24 +1,37 @@
+#' @import dplyr
+usethis::use_package("dplyr")
+
 #' @import fs
-NULL
+usethis::use_package("fs")
 
 #' @import rio
+usethis::use_package("rio")
+
+#' @import stringr
+usethis::use_package("stringr")
+
+#' @importFrom snakecase to_any_case
+usethis::use_package("snakecase")
+
+#' @importFrom magrittr %>%
+usethis::use_package("magrittr")
+
+
+#' @importFrom purrr modify_at
+# usethis::use_package("purr")
 NULL
 
-#' @import snakecase
+#' @importFrom tibble as.tibble
 NULL
 
-#' @import here
+#' @importFrom simputation impute_lm
 NULL
 
-#' @import tidyverse
+#' @importFrom tidyr gather
 NULL
 
-#' @import broom
+#' @importFrom rlang eval_tidy
 NULL
 
-#' @import caret
+#' @import philentropy
 NULL
-
-#' @import geosphere
-NULL
-

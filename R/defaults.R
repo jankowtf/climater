@@ -24,10 +24,9 @@ default_version <- function() {
   "v1"
 }
 
-#' @importFrom dplyr quo
 #' @export
-default_settings <- function() {
-  source(here::here("inst/app/00-settings.R"))$value
+default_settings <- function(file = "00-settings.R") {
+  source(here::here(file))$value
 }
 
 #' @export
@@ -40,8 +39,6 @@ default_id_col_rhs <- function() {
   default_name("station")
 }
 
-#' @importFrom dplyr quo quo_name
-#' @importFrom rlang eval_tidy
 #' @export
 default_id_col_lhs <- function() {
   rhs <- default_id_col_rhs()

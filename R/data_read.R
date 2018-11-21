@@ -1,7 +1,6 @@
 
 # Column names ------------------------------------------------------------
 
-#' @importFrom snakecase to_any_case
 #' @export
 dat_tidy_names <- function(dat) {
   nms <- names(dat)
@@ -14,7 +13,6 @@ dat_tidy_names <- function(dat) {
 
 # Read --------------------------------------------------------------------
 
-#' @import magrittr
 #' @export
 dat_read_generic <- function(
   con_fun,
@@ -36,10 +34,6 @@ dat_read_generic <- function(
     as_tibble()
 }
 
-#' @import dplyr
-#' @import stringr
-#' @import fs
-#' @import rio
 #' @export
 dat_read_multiple_generic <- function(
   con_fun,

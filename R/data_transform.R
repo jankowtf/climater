@@ -1,15 +1,11 @@
 
 # Tidy --------------------------------------------------------------------
 
-#' @importFrom purrr modify_at
-#' @importFrom tibble as.tibble
 data_tidy_generic <- function(dat) {
   dat <- purrr::modify_at(dat, c(2:ncol(dat)), as.numeric)
   tibble::as.tibble(dat)
 }
 
-#' @importFrom purrr modify_at
-#' @importFrom tibble as.tibble
 data_tidy_multipe_generic <- function(dat) {
   dat <- lapply(dat, function(dat) {
     meta <- attributes(dat)$meta
@@ -20,8 +16,6 @@ data_tidy_multipe_generic <- function(dat) {
   })
 }
 
-#' @importFrom purrr modify_at
-#' @importFrom dplyr select
 data_tidy_station <- function(dat) {
   dat <- dplyr::select(dat,
     # dim_station = `wmo-station_id`,
@@ -38,8 +32,6 @@ data_tidy_station <- function(dat) {
   tibble::as.tibble(dat)
 }
 
-#' @importFrom purrr modify_at
-#' @importFrom dplyr select
 data_tidy_station_v2 <- function(dat) {
   # v1 -----
   dat <- data_tidy_station(dat = dat)
@@ -133,7 +125,6 @@ data_tidy_precipitation_v2 <- function(dat) {
 
 # Normalize station IDs -----
 # Mutate 4-digits IDS to 5-digit IDs
-#' @importFrom dplyr quo_name mutate
 data_trans_normalize_station_id <- function(dat) {
   k_dim_station <- quo_prepend("station", "dim")
   dat <- dat %>% mutate(
@@ -146,7 +137,6 @@ data_trans_normalize_station_id <- function(dat) {
 
 # Transform: impute missing values ----------------------------------------
 
-#' @importFrom simputation impute_lm
 data_trans_impute_missing_values <- function(dat) {
   # Correct Inf values ----
   idx <- dat %>% sapply(function(x) any(is.infinite(x)))
@@ -180,9 +170,6 @@ data_trans_impute_missing_values <- function(dat) {
 
 # Transform: reshape ------------------------------------------------------
 
-#' @importFrom dplyr enquo select everything
-#' @importFrom purrr modify_at
-#' @importFrom tidyr gather
 data_trans <- function(
   dat,
   key,
@@ -278,7 +265,6 @@ data_trans_precipitation <- function(dat) {
 
 # Transform: datetime -----------------------------------------------------
 
-#' @importFrom dplyr  mutate case_when
 data_trans_generic_datetime <- function(dat, k_time) {
   k_time_char <- dplyr::quo_name(k_time)
   dplyr::mutate(dat,
@@ -317,7 +303,6 @@ data_trans_precipitation_datetime <- function(dat) {
 
 # Transform: summarize ----------------------------------------------------
 
-#' @importFrom dplyr group_by summarise select arrange ungroup
 data_trans_precipitation_summarize <- function(dat) {
   k_dim_station <- quo_prepend(default_name("station"), "dim")
   k_time_month <- default_name("time_month")
@@ -372,7 +357,6 @@ data_trans_temperature_combine <- function(
   # TODO-20180307-2207: complete tidyfication of eval structure
 }
 
-#' @importFrom magrittr %>%
 data_trans_precipitation_combine <- function(
   dat_hist,
   dat_recent
@@ -412,8 +396,6 @@ data_trans_precipitation_combine <- function(
 
 # Transform: distances ----------------------------------------------------
 
-#' @import purrr
-#' @import tidyr
 data_trans_distance <- function(dat, dist_fun = compute_geo_distance) {
   # dist_fun <- geosphere::distHaversine
 
@@ -479,7 +461,6 @@ data_trans_distance <- function(dat, dist_fun = compute_geo_distance) {
 
 # Transform: join full ----------------------------------------------------
 
-#' @importFrom magrittr %>%
 data_trans_join_full <- function(
   dat_station,
   dat_temp,
@@ -669,6 +650,7 @@ na_to_mean <- function(x) {
 
 # dat_model %>% names()
 
+#' @export
 data_trans_db <- function(dat_input) {
   dat_model <- dat_input %>%
     group_by(dim_station) %>%
@@ -690,12 +672,14 @@ data_trans_db <- function(dat_input) {
 # sapply(dat_model, function(x) sum(is.na(x)))
 # sapply(dat_model_2, function(x) sum(is.na(x)))
 
+#' @export
 data_trans_db_msr <- function(dat_base) {
   dat_base %>%
     select(time_month, matches("msr_")) %>%
     select(-matches("med"))
 }
 
+#' @export
 data_trans_db_msr_v2 <- function(dat_base) {
   dim_station <- quo_prepend(default_name("station"), "dim")
   # TODO-20180610: do the same for other column names as well
@@ -705,6 +689,7 @@ data_trans_db_msr_v2 <- function(dat_base) {
     select(-matches("med"))
 }
 
+#' @export
 dat_transform_relevant_columns <- function(dat) {
   dat <- dat %>%
     dplyr::select(
@@ -727,6 +712,7 @@ dat_transform_relevant_columns <- function(dat) {
     )
 }
 
+#' @export
 dat_transform_names_to_label <- function(
   dat,
   settings = default_settings()

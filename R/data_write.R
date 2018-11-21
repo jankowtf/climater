@@ -1,8 +1,6 @@
 
 # Write -------------------------------------------------------------------
 
-#' @importFrom magrittr %>%
-#' @importFrom  dplyr arrange
 data_write_station <- function(
   dat,
   vsn = default_version(),
@@ -17,8 +15,6 @@ data_write_station <- function(
   file
 }
 
-#' @importFrom magrittr %>%
-#' @importFrom  dplyr arrange
 data_write_temperature_min <- function(
   dat,
   vsn = default_version(),
@@ -35,8 +31,6 @@ data_write_temperature_min <- function(
   file
 }
 
-#' @importFrom magrittr %>%
-#' @importFrom  dplyr arrange
 data_write_temperature_max <- function(
   dat,
   vsn = default_version(),
@@ -53,7 +47,6 @@ data_write_temperature_max <- function(
   file
 }
 
-#' @importFrom magrittr %>%
 data_write_temperature_comb <- function(
   dat,
   vsn = default_version(),
@@ -66,8 +59,6 @@ data_write_temperature_comb <- function(
   file
 }
 
-#' @importFrom magrittr %>%
-#' @importFrom  dplyr arrange
 data_write_sunshine_duration <- function(
   dat,
   vsn = default_version(),
@@ -84,7 +75,6 @@ data_write_sunshine_duration <- function(
   file
 }
 
-#' @importFrom magrittr %>%
 data_write_precipitation_historical <- function(
   dat,
   vsn = default_version(),
@@ -97,7 +87,6 @@ data_write_precipitation_historical <- function(
   file
 }
 
-#' @importFrom magrittr %>%
 data_write_precipitation_recent <- function(
   dat,
   vsn = default_version(),
@@ -110,7 +99,6 @@ data_write_precipitation_recent <- function(
   file
 }
 
-#' @importFrom magrittr %>%
 data_write_precipitation_comb <- function(
   dat,
   vsn = default_version(),
@@ -123,7 +111,6 @@ data_write_precipitation_comb <- function(
   file
 }
 
-#' @importFrom magrittr %>%
 data_write_join_full <- function(
   dat,
   vsn = default_version(),
@@ -136,7 +123,6 @@ data_write_join_full <- function(
   file
 }
 
-#' @importFrom magrittr %>%
 data_write_join_inner <- function(
   dat,
   vsn = default_version(),
@@ -149,7 +135,6 @@ data_write_join_inner <- function(
   file
 }
 
-#' @importFrom magrittr %>%
 data_write_db <- function(
   dat,
   vsn = default_version(),
@@ -162,7 +147,6 @@ data_write_db <- function(
   file
 }
 
-#' @importFrom magrittr %>%
 data_write_db_msr <- function(
   dat,
   vsn = default_version(),
@@ -175,8 +159,6 @@ data_write_db_msr <- function(
   file
 }
 
-#' @importFrom magrittr %>%
-#' @importFrom  dplyr arrange
 data_write_distance <- function(
   dat,
   vsn = default_version(),
