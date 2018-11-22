@@ -249,7 +249,7 @@ server <- function(input, output, session) {
     dist_measures <- input$dist_measures
     dist_measure_final <- input$dist_measure_final
 
-    model_result <- model_run(
+    model_result <- model_run_v2(
       dat_input = dat_input,
       dat_db = dat_db_msr,
       dat_station = dat_station,
