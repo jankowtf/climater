@@ -25,7 +25,16 @@ settings <- list(
     repo_2 = "C:/users/Sebastian/climater"
   ),
   # -> sets the data version to be used
+  scaling = list(
+    # distance_1 = 0
+    # distance_1 = 0.001
+    distance_1 = 1
+  ),
+
+  ##############################################################################
   # Backend settings >> DO NOT CHANGE -----
+  ##############################################################################
+  # TODO 20181122: align with settings approach from FVA project
   data = list(
     # dir_raw = "inst/app/data/raw",
     # dir_tidy = "inst/app/data/tidy",
