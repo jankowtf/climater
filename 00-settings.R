@@ -29,11 +29,11 @@ settings <- list(
     # distance_1 = 0
     # distance_1 = 0.001
     distances = list(
-      0,
-      0.0003,
-      0.001,
+      1,
       0.005,
-      1
+      0.001,
+      0.0003,
+      0
     )
   ),
 

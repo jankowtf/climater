@@ -26,8 +26,7 @@ source("04-load.R")
 # UI ----------------------------------------------------------------------
 
 ui <- fluidPage(
-
-  # Application title
+  # Title -----
   titlePanel("Your climate"),
 
   inputPanel(
@@ -44,13 +43,15 @@ ui <- fluidPage(
   inputPanel(
     sliderInput("msr_distance", label = "Max. distance to destination",
       min = 0,
-      max = 1000,
-      value = 100,
+      max = 10000,
+      value = 5000,
       step = 1,
       ticks = FALSE),
 
     selectInput("time_month", label = "Month of year",
-      choices = 1:12, selected = 7),
+      choices = 1:12, selected = 7, multiple = FALSE),
+    # selectizeInput("time_month", label = "Month of year",
+    #   choices = 1:12, selected = 7),
     # sliderInput("time_month", label = "Month of year",
     #   min = 1, max = 12, value = 7, step = 1),
 
@@ -147,12 +148,6 @@ ui <- fluidPage(
     selectInput("knn", label = "Number of recommendations",
       choices = 1:50, selected = 3),
 
-    # selectInput("dist_measures", label = "Distance measures",
-    #   choices = default_dist_measures(), selected = 1, multiple = TRUE),
-
-    # selectInput("dist_measure_final", label = "Distance measures for ensemble",
-    #   choices = default_dist_measures(), selected = 1),
-
     actionButton("do", "Submit", icon = icon("refresh")),
 
     # JS for automatic detection of geo location
@@ -180,8 +175,8 @@ ui <- fluidPage(
 
   mainPanel(
     tabsetPanel(type = "tabs",
-      tabPanel("Recommendations", shiny::dataTableOutput("prediction")),
-      tabPanel("Inputs", shiny::dataTableOutput("input")),
+      tabPanel("Recommendations", shiny::dataTableOutput("model_output")),
+      tabPanel("Inputs", shiny::dataTableOutput("model_input")),
       tabPanel("Geo lat auto", shiny::textOutput("geo_lat_auto")),
       tabPanel("Geo long auto", shiny::textOutput("geo_long_auto")),
       tabPanel("Geo lat", shiny::textOutput("geo_lat")),
@@ -195,28 +190,28 @@ ui <- fluidPage(
 # Server ------------------------------------------------------------------
 
 server <- function(input, output, session) {
-  dat_distance <- reactive({
-    dat_geo <- data.frame(
+  dat_distance_react <- reactive({
+    dat_geo <- tibble(
       dim_latitude = ifelse(is.null(v <- input$geo_lat_auto), 1, v),
       dim_longitude = ifelse(is.null(v <- input$geo_long_auto), 1, v)
     )
-    compute_geo_distance_v2(p_1 = dat_geo, p_2 = dat_station) %>%
-      dplyr::pull(msr_distance) %>% round()
+    compute_geo_distance_v3(p_1 = dat_geo, p_2 = dat_station)
   })
-  dist_measure <- "euclidean"
-  dist_measure_final <- dist_measure
 
   observe({
     input$geo_lat_auto
     updateSliderInput(session, "msr_distance",
-      value = round(mean(dat_distance(), na.rm = TRUE)),
-      min = min(dat_distance(), na.rm = TRUE),
-      max = max(dat_distance(), na.rm = TRUE),
+      value = round(mean(dat_distance_react()  %>%
+          dplyr::pull(msr_distance) %>% round(), na.rm = TRUE)),
+      min = min(dat_distance_react()  %>%
+          dplyr::pull(msr_distance) %>% round(), na.rm = TRUE),
+      max = max(dat_distance_react()  %>%
+          dplyr::pull(msr_distance) %>% round(), na.rm = TRUE),
       step = 1
     )
   })
 
-  dat_input_rea <- reactive({
+  dat_input_react <- reactive({
     dat <- data.frame(
       dim_latitude = ifelse(input$use_geo_auto == "yes",
         ifelse(is.null(v <- input$geo_lat_auto), 0, as.numeric(v)),
@@ -238,43 +233,38 @@ server <- function(input, output, session) {
     )
 
     msr_inputs_chosen <- input$msr_inputs_chosen
-    # print(msr_inputs_chosen)
     msr_inputs_chosen <- c("dim_latitude", "dim_longitude", msr_inputs_chosen)
     dat[ , msr_inputs_chosen]
   })
 
-  dat_output_rea <- eventReactive(input$do, {
-    dat_input <- dat_input_rea()
+  dat_output_react <- eventReactive(input$do, {
+    dat_input <- dat_input_react()
     knn <- as.numeric(input$knn)
-    dist_measures <- input$dist_measures
-    dist_measure_final <- input$dist_measure_final
 
-    model_result <- model_run_v2(
+    model_output <- model_run_v3(
       dat_input = dat_input,
       dat_db = dat_db_msr,
       dat_station = dat_station,
-      dist_measures = dist_measures,
-      dist_measure_final,
       knn = knn
     )
 
-    model_result
+    model_output
   })
 
-  output$prediction <- shiny::renderDataTable({
-    prediction <- dat_output_rea()$prediction %>%
+  output$model_output <- shiny::renderDataTable({
+    model_output <- dat_output_react()$model_output %>%
       dat_transform_relevant_columns() %>%
       dplyr::mutate(msr_distance = msr_distance %>% round(4)) %>%
       dat_transform_names_to_label()
 
-    prediction
+    model_output
 
   }, options = list(scrollX = TRUE))
   # TODO-20180705: encapsulate column selection in own function to be more
   # flexible and make code easier to maintain
 
-  output$input <- shiny::renderDataTable({
-    dat_output_rea()$input %>%
+  output$model_input <- shiny::renderDataTable({
+    dat_output_react()$model_input %>%
       dat_transform_names_to_label()
   }, options = list(scrollX = TRUE))
 
@@ -295,7 +285,10 @@ server <- function(input, output, session) {
   })
 
   output$dat_distances <- shiny::renderPrint({
-    dat_distance() %>% summary()
+    dat_distance_react()  %>%
+      dplyr::pull(msr_distance) %>%
+      round() %>%
+      summary()
   })
 
 }
