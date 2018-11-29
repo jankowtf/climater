@@ -34,6 +34,13 @@ settings <- list(
       0.001,
       0.0003,
       0
+    ),
+    time = list(
+      1,
+      0.01,
+      0.005,
+      0.001,
+      0
     )
   ),
 
@@ -285,10 +292,16 @@ settings <- list(
         label_1 = "Sunshine hours per day delta"
       )
     ),
-    scaling_factor = list(
-      key = dplyr::quo(scaling_factor),
+    # fct_scaling = list(
+    #   key = dplyr::quo(fct_scaling),
+    #   label = list(
+    #     label_1 = "Scaling factor"
+    #   )
+    # )
+    id = list(
+      key = dplyr::quo(id),
       label = list(
-        label_1 = "Scaling factor"
+        label_1 = "ID"
       )
     )
   )

@@ -693,7 +693,7 @@ data_trans_db_msr_v2 <- function(dat_base) {
 dat_transform_relevant_columns <- function(dat) {
   dat <- dat %>%
     dplyr::select(
-      scaling_factor,
+      id,
       dim_rank,
       dim_country,
       dim_station_name,

@@ -304,7 +304,7 @@ model_estimate_v4 <- function(
   .Deprecated("model_estimate_v5")
   dat_db_out <- dat_db %>%
     dplyr::mutate(
-      scaling_factor = NA
+      fct_scaling = NA
     )
   # Argument handling -----
   dist_measures <- match.arg(dist_measures, several.ok = TRUE)
@@ -339,13 +339,13 @@ model_estimate_v4 <- function(
     cols <- c("dim_latitude", "dim_longitude", "msr_distance")
     if (all(cols %in% colnames(dat_input_row))) {
       # Get scaling factor(s) from settings -----
-      # scaling_factor <- settings$scaling$distances
-      dat_scaling_factor <- tibble(scaling_factor = unlist(settings$scaling$distances))
+      # fct_scaling <- settings$scaling$distances
+      dat_fct_scaling <- tibble(fct_scaling = unlist(settings$scaling$distances))
 
       # Compute geo distance -----
       # dat_msr_distance <- compute_geo_distance_v2(p_1 = dat_input_row, p_2 = dat_station)
-      dat_msr_distance <- dat_scaling_factor %>%
-        dplyr::group_by(scaling_factor) %>%
+      dat_msr_distance <- dat_fct_scaling %>%
+        dplyr::group_by(fct_scaling) %>%
         dplyr::do(
           pipe_compute_geo_distance_v2(
             .,
@@ -360,7 +360,7 @@ model_estimate_v4 <- function(
       dat_list <- handle_input_distance(
         dat_input = dat_input_row,
         dat_msr_distance = dat_msr_distance,
-        dat_scaling_factor = dat_scaling_factor
+        dat_fct_scaling = dat_fct_scaling
       )
       # Update input and distance data:
       dat_input_row <- dat_list$dat_input
@@ -383,13 +383,13 @@ model_estimate_v4 <- function(
 
       dat_distance_geo <- dat_db %>%
         select(
-          scaling_factor,
+          fct_scaling,
           dim_station,
           msr_distance,
           msr_distance_scaled
         ) %>%
         group_by(
-          scaling_factor,
+          fct_scaling,
           dim_station
         ) %>%
         summarise(
@@ -402,11 +402,11 @@ model_estimate_v4 <- function(
       # PATCH 20181122
       # TODO 20181122: remove patch
       dat_input_row <- cbind(
-        data.frame(scaling_factor = NA) %>% as.matrix(),
+        data.frame(fct_scaling = NA) %>% as.matrix(),
         dat_input_row
       )
-      dat_db$scaling_factor <- NA
-      dat_distance_geo$scaling_factor <- NA
+      dat_db$fct_scaling <- NA
+      dat_distance_geo$fct_scaling <- NA
     }
 
     # Drop all dims -----
@@ -434,19 +434,19 @@ model_estimate_v4 <- function(
 
     dat_input_row <- dat_input_row %>% as_tibble()
     names_old <- dat_input_row %>%
-      dplyr::select(-scaling_factor) %>%
+      dplyr::select(-fct_scaling) %>%
       names() %>%
       rlang::syms()
 
     names_new <- c(
-      list(rlang::sym("scaling_factor")),
+      list(rlang::sym("fct_scaling")),
       names_old %>%
         paste0("input_", .) %>%
         rlang::syms()
     )
 
     names_mapping <- c(
-      list(rlang::sym("scaling_factor")),
+      list(rlang::sym("fct_scaling")),
       names_old
     )
     names(names_mapping) <- names_new
@@ -455,15 +455,15 @@ model_estimate_v4 <- function(
     dat_estimation <- left_join(
       dat_db %>% as_tibble(),
       dat_input_row,
-      by = "scaling_factor"
+      by = "fct_scaling"
     ) %>%
       dplyr::select(
-        scaling_factor,
+        fct_scaling,
         everything()
       )
 
     estimation_result <- dat_estimation %>%
-      dplyr::group_by(scaling_factor) %>%
+      dplyr::group_by(fct_scaling) %>%
       dplyr::do(
         pipe_model_estimate(
           .,
@@ -484,7 +484,7 @@ model_estimate_v4 <- function(
 }
 
 pipe_compute_geo_distance_v2 <- function(
-  dat_scaling_factor,
+  dat_fct_scaling,
   dat_input_row,
   dat_station
 ) {
@@ -495,7 +495,7 @@ pipe_compute_geo_distance_v2 <- function(
   )
   dat_msr_distance <- bind_cols(
     dat_msr_distance,
-    dat_msr_distance * dat_scaling_factor %>% dplyr::pull(scaling_factor)
+    dat_msr_distance * dat_fct_scaling %>% dplyr::pull(fct_scaling)
   ) %>%
     dplyr::rename(msr_distance_scaled = msr_distance1)
   # TODO 20181122: tidy eval for column names
@@ -525,18 +525,18 @@ compute_geo_distance_v2 <- function(p_1, p_2) {
 }
 
 pipe_compute_geo_distance_v3 <- function(
-  dat_scaling_factor,
+  dat_fct_scaling,
   dat_input,
   dat_station
 ) {
-  dat_scaling_factor
+  dat_fct_scaling
   dat_msr_distance <- compute_geo_distance_v2(
     p_1 = dat_input,
     p_2 = dat_station
   )
   dat_msr_distance <- bind_cols(
     dat_msr_distance,
-    dat_msr_distance * dat_scaling_factor %>% dplyr::pull(scaling_factor)
+    dat_msr_distance * dat_fct_scaling %>% dplyr::pull(fct_scaling)
   ) %>%
     dplyr::rename(msr_distance_scaled = msr_distance1)
   # TODO 20181122: tidy eval for column names
@@ -548,7 +548,7 @@ pipe_compute_geo_distance_v3 <- function(
 handle_input_distance <- function(
   dat_input,
   dat_msr_distance,
-  dat_scaling_factor
+  dat_fct_scaling
 ) {
   .Deprecated("handle_input_distance_v2")
   # Handle distance
@@ -564,26 +564,26 @@ handle_input_distance <- function(
 
   list(
     dat_input = if (
-      all(dat_scaling_factor %>% dplyr::pull(scaling_factor) == 0)
+      all(dat_fct_scaling %>% dplyr::pull(fct_scaling) == 0)
     ) {
       # If scaling factor 0 then this implies to drop alltogether
       dat_input[, !idx, drop = FALSE]
     } else {
       do_fun <- function(
-        dat_scaling_factor,
+        dat_fct_scaling,
         dat_input,
         idx
       ) {
         # Apply scaling so input and DB data match up downstream
-        dat_input[, idx] <- dat_input[, idx] * dat_scaling_factor %>%
-          dplyr::pull(scaling_factor)
+        dat_input[, idx] <- dat_input[, idx] * dat_fct_scaling %>%
+          dplyr::pull(fct_scaling)
         colnames(dat_input)[idx] <- "msr_distance_scaled"
         # TODO 20181122: tidy eval for column names based on settings
         as_tibble(dat_input)
       }
 
-      dat_scaling_factor %>%
-        dplyr::group_by(scaling_factor) %>%
+      dat_fct_scaling %>%
+        dplyr::group_by(fct_scaling) %>%
         dplyr::do(
           do_fun(
             .,
@@ -605,7 +605,7 @@ model_predict_index_v4 <- function(
   .Deprecated("model_predict_index_v5")
   model_prediction <- lapply(model_estimation, function(estimation) {
     index <- estimation$estimation_result %>%
-      dplyr::group_by(scaling_factor) %>%
+      dplyr::group_by(fct_scaling) %>%
       dplyr::mutate(index = 1:n()) %>%
       dplyr::arrange(estimation) %>%
       dplyr::slice(1:knn) %>%
@@ -662,7 +662,7 @@ model_predict_v4 <- function(
     dat_prediction <- dat_prediction %>% mutate_if(is.double, round, 1)
 
     dat_prediction <- bind_cols(
-      choice %>% dplyr::select(scaling_factor, dim_rank = rank),
+      choice %>% dplyr::select(fct_scaling, dim_rank = rank),
       dat_prediction
     )
 
@@ -676,10 +676,10 @@ model_predict_v4 <- function(
     ) %>%
       left_join(
         dat_distance_geo,
-        by = c("scaling_factor", "dim_station")
+        by = c("fct_scaling", "dim_station")
       ) %>%
       select(
-        scaling_factor,
+        fct_scaling,
         dim_rank,
         dim_country,
         dim_station_name,
@@ -713,4 +713,272 @@ model_predict_v4 <- function(
       prediction = dat_prediction_2
     )
   })
+}
+
+model_estimate_inner <- function(.x) {
+  .Deprecated("model_estimate_inner_v2")
+  dat_input <- .x$dat_input
+  dat_db <- .x$dat_db
+  dat_station <- .x$dat_station
+
+  # Handle time input -----
+  # Only keep weather records that have time == user input
+  dat_list <- handle_input_time(
+    dat_input = dat_input,
+    dat_db = dat_db
+  )
+  # Update input and DB data:
+  dat_input <- dat_list$dat_input
+  dat_db <- dat_list$dat_db
+
+  # Get scaling factor(s) from settings -----
+  # fct_scaling <- settings$scaling$distances
+  dat_fct_scaling <- tibble(fct_scaling = unlist(settings$scaling$distances))
+
+  # Compute geo distance -----
+  # dat_msr_distance <- compute_geo_distance_v2(p_1 = dat_input_row, p_2 = dat_station)
+  dat_msr_distance <- compute_geo_distance_v3(
+    p_1 = dat_input %>%
+      dplyr::select(matches("latitude|longitude")) %>%
+      dplyr::summarise_all(unique),
+    p_2 = dat_station
+  )
+
+  # Handle distance input -----
+  # Only keep stations that have distance <= user input
+  dat_list <- handle_input_distance_v2(
+    dat_input = dat_input,
+    dat_msr_distance = dat_msr_distance
+  )
+  # Update input and distance data:
+  dat_input <- dat_list$dat_input
+  dat_input_out <- dat_input
+  dat_input <- purrr::map_df(
+    seq_len(nrow(dat_fct_scaling)), ~dat_input) %>%
+    dplyr::mutate(
+      fct_scaling = rep(dat_fct_scaling$fct_scaling, nrow(dat_input)) %>%
+        sort()
+    ) %>%
+    dplyr::select(
+      fct_scaling,
+      everything()
+    )
+  dat_msr_distance <- dat_list$dat_msr_distance
+
+  # Scale -----
+  dat_msr_distance <- dat_fct_scaling %>%
+    dplyr::group_by(fct_scaling) %>%
+    dplyr::do(
+      pipe_compute_geo_distance_v4(
+        .,
+        dat_msr_distance
+      )
+    ) %>%
+    ungroup()
+
+  # Handle DB -----
+  dat_list <- handle_input_db(
+    dat_db = dat_db,
+    dat_msr_distance = dat_msr_distance
+  )
+  dat_db <- dat_list$dat_db
+  dat_db_out <- dat_list$dat_db_out
+
+  # Create geo distance data frame ----
+  dat_distance_geo <- handle_dat_dist_geo(dat_db)
+
+  # Early exit -----
+  if (!nrow(dat_db)) {
+    model_result <- list(
+      estimation_result= tibble(
+        fct_scaling = NA,
+        dim_station = NA,
+        index = NA,
+        rank = NA,
+        estimation_result = NA
+      ),
+      dat_distance_geo = dat_distance_geo,
+      dat_input = dat_input_out,
+      dat_db = dat_db_out
+    )
+    return(model_result)
+  }
+
+  # Drop all dims -----
+  dat_list <- handle_drop_dims(dat_db, dat_input)
+  dat_input <- dat_list$dat_input
+  dat_db <- dat_list$dat_db
+
+  # Align dimensions of input -----
+  alignment_factor <- dat_db %>% nrow() / nrow(dat_fct_scaling)
+
+  dat_input <- purrr::map_df(
+    seq_len(alignment_factor), ~dat_input
+  ) %>%
+    dplyr::arrange(fct_scaling)
+  # dat_input <- dat_input %>%
+  #   dplyr::group_by(fct_scaling) %>%
+  #   purrr::map_df(seq_len(nrow(dat_db)), ~dat_input)
+  #
+  # Compute euclidean distance -----
+  # purrr::map2(dat_db, dat_input, pmap_inner_2)
+  fct_scaling <- dat_input %>%
+    dplyr::pull(fct_scaling)
+  dat_input_mat <- dat_input %>%
+    dplyr::select(-fct_scaling) %>%
+    as.matrix()
+  dat_db_mat <- dat_db %>%
+    dplyr::arrange(fct_scaling) %>%
+    dplyr::select(-fct_scaling) %>%
+    as.matrix()
+  vec_estimation_result <- sapply(1:nrow(dat_db), function(row) {
+    dat_db_this <- dat_db_mat[row, , drop = FALSE]
+    dat_input_this <- dat_input_mat[row, , drop = FALSE]
+    res <- philentropy:::euclidean(
+      dat_input_this, dat_db_this, testNA = FALSE)
+  })
+
+  estimation_result <- tibble(
+    fct_scaling = fct_scaling,
+    dim_station = rep(dat_db_out$dim_station, nrow(dat_fct_scaling)),
+    estimation_result = vec_estimation_result
+  ) %>%
+    dplyr::group_by(fct_scaling) %>%
+    # Add distances for arranging:
+    dplyr::left_join(dat_distance_geo,
+      by = c("fct_scaling", "dim_station")) %>%
+    # Add position index:
+    dplyr::mutate(index = row_number()) %>%
+    dplyr::arrange(fct_scaling, estimation_result, msr_distance) %>%
+    dplyr::mutate(rank = row_number()) %>%
+    dplyr::select(
+      fct_scaling,
+      dim_station,
+      index,
+      rank,
+      estimation_result
+    ) %>%
+    ungroup()
+
+  list(
+    estimation_result= estimation_result,
+    dat_distance_geo = dat_distance_geo,
+    dat_input = dat_input_out,
+    dat_db = dat_db_out
+  )
+}
+
+
+handle_input_time <- function(
+  dat_input,
+  dat_db
+) {
+  .Deprecated("model_handle_input_time_v2")
+  col_dim_time <- settings$name_mapping$time_month$key
+  idx <- colnames(dat_input) %>% str_detect(quo_name(col_dim_time))
+  if (any(idx)) {
+    value_dim_time <- dat_input %>% dplyr::pull(!!col_dim_time)
+    dat_db <- dat_db %>% dplyr::filter(
+      !!col_dim_time == value_dim_time
+    )
+  }
+
+  list(
+    dat_input = dat_input,
+    dat_db = dat_db
+  )
+}
+
+handle_dat_dist_geo <- function(
+  dat_db
+) {
+  .Deprecated("model_handle_dat_dist_geo_v2")
+  df_dist_geo <- dat_db %>%
+    select(
+      fct_scaling,
+      dim_station,
+      msr_distance,
+      msr_distance_scaled
+    ) %>%
+    group_by(
+      fct_scaling,
+      dim_station
+    ) %>%
+    summarise(
+      msr_distance = unique(msr_distance),
+      msr_distance_scaled = unique(msr_distance_scaled)
+    ) %>%
+    ungroup()
+  # TODO 20181122: tidy eval for column names
+}
+
+handle_input_db <- function(
+  dat_db,
+  dat_msr_distance
+) {
+  .Deprecated("model_handle_input_db_v2")
+  # Join distances to DB data -----
+  col_dim_station <- default_name("station") %>% quo_prepend("dim")
+  value_dim_station <- dat_msr_distance %>% dplyr::pull(!!col_dim_station)
+
+  # Ensure stations in DB data match those in distance data:
+  dat_db <- dat_db %>%
+    dplyr::filter(!!col_dim_station %in% value_dim_station)
+
+  # Cache a version of DB data before the join for downstream processing:
+  dat_db_out <- dat_db
+
+  # Actual join:
+  dat_db <- left_join(
+    dat_db,
+    dat_msr_distance,
+    by = "dim_station"
+  )
+
+  list(
+    dat_db = dat_db,
+    dat_db_out = dat_db_out
+  )
+}
+
+pipe_compute_geo_distance_v4 <- function(
+  dat_fct_scaling,
+  dat_msr_distance
+) {
+  dat_msr_distance %>%
+    dplyr::mutate(
+      msr_distance_scaled = msr_distance * dat_fct_scaling %>%
+        pull(fct_scaling)
+    )
+}
+
+pipe_compute_geo_distance_v5 <- function(
+  dat_fct_scaling,
+  dat_msr_distance
+) {
+  .Deprecated("pipe_compute_geo_distance_v6")
+  dat_msr_distance %>%
+    dplyr::mutate(
+      msr_distance_scaled = msr_distance * dat_fct_scaling %>%
+        pull(fct_scaling_dist)
+    )
+}
+
+handle_drop_dims <- function(dat_db, dat_input) {
+  .Deprecated("model_handle_drop_dims_v2")
+  dat_input <- dat_input %>%
+    dplyr::select(-matches("dim"))
+  dat_db <- dat_db %>%
+    select(-matches("dim_"))
+  # TODO-20180610: encapsulate in function
+
+  cols <- names(dat_input) %>%
+    rlang::syms()
+  dat_db <- dat_db %>%
+    dplyr::select(!!!cols)
+
+  list(
+    dat_input = dat_input,
+    dat_db = dat_db
+  )
 }

@@ -7,6 +7,7 @@
 #    http://shiny.rstudio.com/
 #
 
+options(scipen = 10)
 library(shiny)
 options(shiny.suppressMissingContextError = TRUE)
 library(DT)
@@ -21,7 +22,7 @@ settings$output$show <- FALSE
 set_global_data_repo("repo_1", settings = settings)
 # set_global_data_repo("repo_2", settings = settings)
 dat_db_0 <- data_read_db(vsn = "v3")
-source("04-load.R")
+source("app_load_data.R")
 
 # UI ----------------------------------------------------------------------
 
@@ -212,7 +213,7 @@ server <- function(input, output, session) {
   })
 
   dat_input_react <- reactive({
-    dat <- data.frame(
+    dat <- tibble(
       dim_latitude = ifelse(input$use_geo_auto == "yes",
         ifelse(is.null(v <- input$geo_lat_auto), 0, as.numeric(v)),
         ifelse(is.null(v <- input$geo_lat), 0, as.numeric(v))
@@ -234,14 +235,17 @@ server <- function(input, output, session) {
 
     msr_inputs_chosen <- input$msr_inputs_chosen
     msr_inputs_chosen <- c("dim_latitude", "dim_longitude", msr_inputs_chosen)
-    dat[ , msr_inputs_chosen]
+    # dat[ , msr_inputs_chosen]
+    msr_inputs_chosen <- names(dat) %in% msr_inputs_chosen
+    dat[ , !msr_inputs_chosen] <- NA
+    dat
   })
 
   dat_output_react <- eventReactive(input$do, {
     dat_input <- dat_input_react()
     knn <- as.numeric(input$knn)
 
-    model_output <- model_run_v3(
+    model_output <- model_run_v4(
       dat_input = dat_input,
       dat_db = dat_db_msr,
       dat_station = dat_station,
@@ -252,6 +256,7 @@ server <- function(input, output, session) {
   })
 
   output$model_output <- shiny::renderDataTable({
+    # mtcars
     model_output <- dat_output_react()$model_output %>%
       dat_transform_relevant_columns() %>%
       dplyr::mutate(msr_distance = msr_distance %>% round(4)) %>%
@@ -259,7 +264,7 @@ server <- function(input, output, session) {
 
     model_output
 
-  }, options = list(scrollX = TRUE))
+  }, options = list(scrollX = TRUE, scrollY = "400px", pageLength = 100))
   # TODO-20180705: encapsulate column selection in own function to be more
   # flexible and make code easier to maintain
 
