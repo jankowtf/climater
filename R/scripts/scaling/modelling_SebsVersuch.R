@@ -111,13 +111,13 @@ model_estimate_distances_v2 <- function(
     # TODO-20180610: encapsulate in function
 
     ## SEB
-    scaling_factor=0.2 # in %
+    fct_scaling=0.2 # in %
 
         # this adds the distance to a certain location to the data, as a new column?!
     cols <- c("dim_latitude", "dim_longitude", "msr_distance")
     if (all(cols %in% colnames(dat_input_row))) {
       # dat_input_row <- as.matrix(dat_input)
-      msr_distance_mod <- compute_geo_distance_v2(p_1 = dat_input_row, p_2 = dat_station) * scaling_factor
+      msr_distance_mod <- compute_geo_distance_v2(p_1 = dat_input_row, p_2 = dat_station) * fct_scaling
       msr_distance_mod$dim_station <- dat_station$dim_station
       dat_db_mod <- left_join(dat_db_mod, msr_distance_mod, by = "dim_station")
       #dat_distance_geo_mod <- dat_db_mod %>%
@@ -138,8 +138,8 @@ model_estimate_distances_v2 <- function(
 
     #### SEBASTIAN: play with scaling of geographical distance:
     ## scaling
-    #scaling_factor=100
-    #dat_input_row$msr_distance <- dat_input_row$msr_distance * scaling_factor/100
+    #fct_scaling=100
+    #dat_input_row$msr_distance <- dat_input_row$msr_distance * fct_scaling/100
     #dat_input_row$msr_distance <- dat_input_row$msr_distance
     #dat_input_row$msr_distance  # $ operator invalid for atomic vectors
     #dat_input_row[,"msr_distance"]  # Indizierung außerhalb der Grenzen

@@ -25,7 +25,7 @@ default_version <- function() {
 }
 
 #' @export
-default_settings <- function(file = "00-settings.R") {
+default_settings <- function(file = "app_settings.R") {
   source(here::here(file))$value
 }
 

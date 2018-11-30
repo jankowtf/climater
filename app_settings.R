@@ -28,7 +28,20 @@ settings <- list(
   scaling = list(
     # distance_1 = 0
     # distance_1 = 0.001
-    distance_1 = 1
+    distances = list(
+      1,
+      0.005,
+      0.001,
+      0.0003,
+      0
+    ),
+    time = list(
+      1,
+      0.01,
+      0.005,
+      0.001,
+      0
+    )
   ),
 
   ##############################################################################
@@ -277,6 +290,18 @@ settings <- list(
       key = dplyr::quo(msr_sundur_avg_diff),
       label = list(
         label_1 = "Sunshine hours per day delta"
+      )
+    ),
+    # fct_scaling = list(
+    #   key = dplyr::quo(fct_scaling),
+    #   label = list(
+    #     label_1 = "Scaling factor"
+    #   )
+    # )
+    id = list(
+      key = dplyr::quo(id),
+      label = list(
+        label_1 = "ID"
       )
     )
   )

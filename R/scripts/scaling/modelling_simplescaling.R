@@ -84,14 +84,14 @@ model_estimate_distances_v2 <- function(
 
 
     ### SEB
-    scaling_factor=0.001
+    fct_scaling=0.001
     ###
 
     # this adds the distance to a certain location to the data, as a new column?!
     cols <- c("dim_latitude", "dim_longitude", "msr_distance")
     if (all(cols %in% colnames(dat_input_row))) {
       # dat_input_row <- as.matrix(dat_input)
-      msr_distance <- compute_geo_distance_v2(p_1 = dat_input_row, p_2 = dat_station) * scaling_factor
+      msr_distance <- compute_geo_distance_v2(p_1 = dat_input_row, p_2 = dat_station) * fct_scaling
       msr_distance$dim_station <- dat_station$dim_station
       dat_db <- left_join(dat_db, msr_distance, by = "dim_station")
       dat_distance_geo <- dat_db %>%
