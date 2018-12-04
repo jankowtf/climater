@@ -35,3 +35,12 @@ NULL
 
 #' @import philentropy
 NULL
+
+#' @import tibble
+NULL
+
+#' @import purrr
+NULL
+
+#' @import purrrlyr
+NULL

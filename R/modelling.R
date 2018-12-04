@@ -154,7 +154,7 @@ model_estimate_v5 <- function(
 ) {
   # Get scaling factor(s) from settings -----
   if (TRUE) {
-    dat_fct_scaling = tibble(
+    dat_fct_scaling = tibble::tibble(
       fct_scaling_dist = unlist(settings$scaling$distances) %>%
         rep(nrow(dat_input)),
       fct_scaling_time = unlist(settings$scaling$time) %>%
@@ -194,7 +194,7 @@ model_estimate_v5 <- function(
       )
   } else {
     stop("Single set of scaling factors for all vars to be scaled not implemented yet")
-    dat_fct_scaling = tibble(
+    dat_fct_scaling = tibble::tibble(
       dat_fct_scaling = unlist(settings$scaling$distances)
     )
   }
@@ -308,7 +308,7 @@ model_estimate_inner_v2 <- function(.x) {
   v_fct_scaling_dist <- dat_input %>%
     dplyr::distinct(fct_scaling_dist) %>%
     dplyr::pull(fct_scaling_dist)
-  tmp <- tibble(
+  tmp <- tibble::tibble(
     dim_station = dat_msr_distance %>% dplyr::pull(dim_station) %>%
       rep(length(v_fct_scaling_dist)) %>%
       sort(),
@@ -341,7 +341,7 @@ model_estimate_inner_v2 <- function(.x) {
   # Early exit -----
   if (!nrow(dat_db)) {
     model_result <- list(
-      estimation_result= tibble(
+      estimation_result= tibble::tibble(
         fct_scaling = NA,
         dim_station = NA,
         index = NA,
@@ -384,7 +384,7 @@ model_estimate_inner_v2 <- function(.x) {
       dat_input_this, dat_db_this, testNA = FALSE)
   })
 
-  estimation_result <- tibble(
+  estimation_result <- tibble::tibble(
     fct_scaling = fct_scaling,
     dim_station = rep(dat_db_out$dim_station, nrow(dat_fct_scaling)),
     estimation_result = vec_estimation_result
@@ -441,7 +441,7 @@ model_estimate_inner_v3 <- function(
   v_fct_scaling_dist <- dat_input %>%
     dplyr::distinct(fct_scaling_dist) %>%
     dplyr::pull(fct_scaling_dist)
-  tmp <- tibble(
+  tmp <- tibble::tibble(
     dim_station = dat_msr_distance %>% dplyr::pull(dim_station) %>%
       rep(length(v_fct_scaling_dist)) %>%
       sort(),
@@ -491,7 +491,7 @@ model_estimate_inner_v3 <- function(
   # Early exit -----
   if (!nrow(dat_db)) {
     model_result <- list(
-      estimation_result= tibble(
+      estimation_result= tibble::tibble(
         fct_scaling = NA,
         dim_station = NA,
         index = NA,
@@ -536,7 +536,7 @@ model_estimate_inner_v3 <- function(
       dat_input_this, dat_db_this, testNA = FALSE)
   })
 
-  estimation_result <- tibble(
+  estimation_result <- tibble::tibble(
     # fct_scaling_time = fct_scaling_time,
     # fct_scaling_dist = fct_scaling_dist,
     dim_station = dat_db_out$dim_station,
@@ -601,7 +601,7 @@ pipe_model_estimate_inner <- function(
   #   rlang::syms() %>%
   #   purrr::map(function(s) expr(!!s))
   dat_estimation <- dat_estimation %>%
-    as_tibble()
+    tibble::as_tibble()
   cols_input <- dat_estimation %>%
     dplyr::select(matches("^input_")) %>%
     names() %>%
@@ -622,7 +622,7 @@ pipe_model_estimate_inner <- function(
   estimation <- philentropy:::euclidean(
     dat_input, dat_db, testNA = FALSE)
 
-  tibble(
+  tibble::tibble(
     fct_scaling = dat_estimation$fct_scaling %>% unique(),
     estimation = estimation
   )
@@ -719,7 +719,7 @@ model_predict_v3 <- function(
     # Ensure matrix -----
     dat_input <- model_prediction_index[[idx_input]]$dat_input
     dat_db <- model_prediction_index[[idx_input]]$dat_db %>%
-      as_tibble()
+      tibble::as_tibble()
 
     choice <- model_prediction_index[[idx_input]]$estimation_result_index
     dist_meassure <- unlist(lapply(names(choice), rep, knn))
@@ -949,7 +949,7 @@ model_apply_v1 <- function(
 
       # Return -----
       list(
-        model_input = dat_input %>% as_tibble(),
+        model_input = dat_input %>% tibble::as_tibble(),
         model_output = dat_output_2
       )
     })
@@ -1083,7 +1083,7 @@ model_apply_v2 <- function(
 
       # Return -----
       list(
-        model_input = dat_input %>% as_tibble(),
+        model_input = dat_input %>% tibble::as_tibble(),
         model_output = dat_output_2
       )
     })

@@ -16,4 +16,7 @@ Imports:
     rio,
     stringr,
     snakecase,
-    magrittr
+    magrittr,
+    tibble,
+    purrr,
+    purrrlyr

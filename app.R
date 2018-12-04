@@ -192,7 +192,7 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   dat_distance_react <- reactive({
-    dat_geo <- tibble(
+    dat_geo <- tibble::tibble(
       dim_latitude = ifelse(is.null(v <- input$geo_lat_auto), 1, v),
       dim_longitude = ifelse(is.null(v <- input$geo_long_auto), 1, v)
     )
@@ -213,7 +213,7 @@ server <- function(input, output, session) {
   })
 
   dat_input_react <- reactive({
-    dat <- tibble(
+    dat <- tibble::tibble(
       dim_latitude = ifelse(input$use_geo_auto == "yes",
         ifelse(is.null(v <- input$geo_lat_auto), 0, as.numeric(v)),
         ifelse(is.null(v <- input$geo_lat), 0, as.numeric(v))
