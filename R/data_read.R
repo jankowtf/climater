@@ -31,7 +31,7 @@ dat_read_generic <- function(
   }
   dat %>%
     dat_tidy_names() %>%
-    as_tibble()
+    tibble::as_tibble()
 }
 
 #' @export
@@ -87,7 +87,7 @@ dat_read_multiple_generic <- function(
     dat
   }, .progress = "text", .id = NULL)
 
-  dat %>% as_tibble()
+  dat %>% tibble::as_tibble()
 }
 
 #' @export
