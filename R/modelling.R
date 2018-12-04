@@ -147,7 +147,7 @@ model_estimate_v2 <- function(
 }
 
 #' @export
-model_estimate_v5 <- function(
+model_estimate_v6 <- function(
   dat_input,
   dat_db,
   dat_station
@@ -199,11 +199,11 @@ model_estimate_v5 <- function(
     )
   }
 
-  dat_list <- model_handle_input_time_v2(
-    dat_input = dat_input,
-    dat_db = dat_db
-  )
-  dat_db <- dat_list$dat_db
+  # dat_list <- model_handle_input_time_v2(
+  #   dat_input = dat_input,
+  #   dat_db = dat_db
+  # )
+  # dat_db <- dat_list$dat_db
 
   # Prepare input for subsequent {purrr} pipes -----
   # dat_estimation_input <- model_prepare_estimation_input(
@@ -250,7 +250,7 @@ model_estimate_v5 <- function(
     function(v) list(v)[[1L]], .collate = "list")$.out
 
   df_estimate <- dat_input %>%
-    purrr::map(model_estimate_inner_v3,
+    purrr::map(model_estimate_inner_v4,
       dat_db = dat_db, dat_station = dat_station)
 
   df_estimate
@@ -414,7 +414,8 @@ model_estimate_inner_v2 <- function(.x) {
   )
 }
 
-model_estimate_inner_v3 <- function(
+#' @export
+model_estimate_inner_v4 <- function(
   dat_input,
   dat_db,
   dat_station
@@ -540,6 +541,7 @@ model_estimate_inner_v3 <- function(
     # fct_scaling_time = fct_scaling_time,
     # fct_scaling_dist = fct_scaling_dist,
     dim_station = dat_db_out$dim_station,
+    time_month = dat_db_out$time_month,
     estimation_result = vec_estimation_result
   ) %>%
     # dplyr::mutate(
@@ -566,6 +568,7 @@ model_estimate_inner_v3 <- function(
     dplyr::mutate(rank = row_number()) %>%
     dplyr::select(
       dim_station,
+      time_month,
       index,
       rank,
       estimation_result
@@ -961,7 +964,8 @@ model_apply_v1 <- function(
   )
 }
 
-model_apply_v2 <- function(
+#' @export
+model_apply_v3 <- function(
   model_estimation,
   dat_station,
   knn
@@ -987,7 +991,8 @@ model_apply_v2 <- function(
       foo <- function(choice, dat_db) {
         dat_db %>%
           dplyr::filter(
-            dim_station %in% choice$dim_station
+            dim_station %in% choice$dim_station,
+            time_month %in% choice$time_month
           )
       }
 
@@ -1410,25 +1415,35 @@ model_run_v3 <- function(
   model_output
 }
 
-model_run_v4 <- function(
+model_run_v5 <- function(
   dat_input,
   dat_db,
   dat_station,
   knn
 ) {
-  # Model estimation -----
-  model_estimation <- model_estimate_v5(
-    dat_input = dat_input,
-    dat_db = dat_db,
-    dat_station = dat_station
-  )
+  withProgress(message = 'Getting recommendations', value = 0, {
 
-  # Model output -----
-  model_output <- model_apply_v2(
-    model_estimation,
-    dat_station = dat_station,
-    knn = knn
-  )
+    incProgress(1/3, detail = "Estimating...")
+    # Model estimation -----
+    model_estimation <- model_estimate_v6(
+      dat_input = dat_input,
+      dat_db = dat_db,
+      dat_station = dat_station
+    )
+
+
+    incProgress(2/3, detail = "Selecting...")
+    # Model output -----
+    model_output <- model_apply_v3(
+      model_estimation,
+      dat_station = dat_station,
+      knn = knn
+    )
+
+    incProgress(3/3, detail = "Done...")
+
+    model_output
+  })
 
   model_output
 }

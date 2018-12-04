@@ -245,7 +245,7 @@ server <- function(input, output, session) {
     dat_input <- dat_input_react()
     knn <- as.numeric(input$knn)
 
-    model_output <- model_run_v4(
+    model_output <- model_run_v5(
       dat_input = dat_input,
       dat_db = dat_db_msr,
       dat_station = dat_station,
