@@ -11,7 +11,7 @@ compute_geo_distance_v3 <- function(p_1, p_2) {
     sin(pi/180*p_1[ , "dim_latitude"]) * sin(pi/180*p_2[ , "dim_latitude"]) +
       cos(pi/180*p_1[ , "dim_latitude"]) * cos(pi/180*p_2[ , "dim_latitude"]) *
       cos(pi/180*p_1[ , "dim_longitude"] - pi/180*p_2[ , "dim_longitude"]))
-  tibble(
+  tibble::tibble(
     dim_station = dim_station,
     msr_distance = dist
   )

@@ -982,3 +982,437 @@ handle_drop_dims <- function(dat_db, dat_input) {
     dat_db = dat_db
   )
 }
+
+model_run_v4 <- function(
+  dat_input,
+  dat_db,
+  dat_station,
+  knn
+) {
+  .Deprecated("model_run_v5")
+  # Model estimation -----
+  model_estimation <- model_estimate_v5(
+    dat_input = dat_input,
+    dat_db = dat_db,
+    dat_station = dat_station
+  )
+
+  # Model output -----
+  model_output <- model_apply_v2(
+    model_estimation,
+    dat_station = dat_station,
+    knn = knn
+  )
+
+  model_output
+}
+
+model_estimate_v5 <- function(
+  dat_input,
+  dat_db,
+  dat_station
+) {
+  .Deprecated("model_estimate_v6")
+  # Get scaling factor(s) from settings -----
+  if (TRUE) {
+    dat_fct_scaling = tibble::tibble(
+      fct_scaling_dist = unlist(settings$scaling$distances) %>%
+        rep(nrow(dat_input)),
+      fct_scaling_time = unlist(settings$scaling$time) %>%
+        rep(nrow(dat_input))
+    )
+
+    # Expand -----
+    dat_fct_scaling <- dat_fct_scaling %>%
+      tidyr::expand(fct_scaling_dist, fct_scaling_time)
+
+    # Add columns for join -----
+    # dat_fct_scaling <- dat_fct_scaling %>%
+    #   dplyr::mutate(
+    #     time_month = dat_input %>%
+    #       dplyr::select_at(if("time_month" %in% names(.))
+    #         "time_month" else integer(0)) %>%
+    #       dplyr::pull()
+    #   )
+    # KEEP AS REFERENCE
+    dat_fct_scaling <- dat_fct_scaling %>%
+      dplyr::mutate(
+        time_month = dat_input %>%
+          dplyr::pull(time_month),
+        msr_distance = dat_input %>%
+          dplyr::pull(msr_distance)
+      )
+
+    dat_input <- dat_input %>%
+      # dplyr::select(time_month) %>%
+      dplyr::left_join(
+        dat_fct_scaling,
+        by = intersect(names(dat_input), names(dat_fct_scaling))
+      ) %>%
+      dplyr::mutate(
+        time_month_scaled = time_month * fct_scaling_time,
+        msr_distance_scaled = msr_distance * fct_scaling_dist
+      )
+  } else {
+    stop("Single set of scaling factors for all vars to be scaled not implemented yet")
+    dat_fct_scaling = tibble::tibble(
+      dat_fct_scaling = unlist(settings$scaling$distances)
+    )
+  }
+
+  # dat_list <- model_handle_input_time_v2(
+  #   dat_input = dat_input,
+  #   dat_db = dat_db
+  # )
+  # dat_db <- dat_list$dat_db
+
+  # Prepare input for subsequent {purrr} pipes -----
+  # dat_estimation_input <- model_prepare_estimation_input(
+  #   dat_input,
+  #   dat_db,
+  #   dat_station
+  # )
+  #
+  # # Compute distance for each input vector -----
+  # df_estimate <- dat_estimation_input %>%
+  #   purrr::map(model_estimate_inner_v2)
+
+  if (FALSE) {
+    dat_db <- purrr::map(
+      seq_len(nrow(dat_input)), ~dat_db
+    )
+    dat_station <- purrr::map(
+      seq_len(nrow(dat_input)), ~dat_station
+    )
+    dat_input <- purrrlyr::by_row(dat_input,
+      function(v) list(v)[[1L]], .collate = "list")$.out
+
+    dat_estimation_input <- purrr::pmap(list(dat_input, dat_db, dat_station),
+      function(a, b, c) {
+        list(
+          dat_input = a,
+          dat_db = b,
+          dat_station = c
+        )
+      })
+    df_estimate <- dat_estimation_input %>%
+      purrr::map(model_estimate_inner_v2)
+  }
+
+  dat_input <- dat_input %>%
+    dplyr::mutate(
+      id = str_glue("time={fct_scaling_time}_dist={fct_scaling_dist}")
+    ) %>%
+    dplyr::select(
+      id,
+      everything()
+    )
+  dat_input <- purrrlyr::by_row(dat_input,
+    function(v) list(v)[[1L]], .collate = "list")$.out
+
+  df_estimate <- dat_input %>%
+    purrr::map(model_estimate_inner_v3,
+      dat_db = dat_db, dat_station = dat_station)
+
+  df_estimate
+}
+
+model_apply_v2 <- function(
+  model_estimation,
+  dat_station,
+  knn
+) {
+  .Deprecated("model_apply_v3")
+  # dat_result <- lapply(model_estimation, function(estimation) {
+  model_output_list <- model_estimation %>%
+    purrr::map(function(estimation) {
+      # Ensure matrix -----
+      dat_db <- estimation$dat_db
+
+      choice <- estimation$estimation_result %>%
+        dplyr::filter(rank %in% 1:knn)
+
+      dat_input <- estimation$dat_input
+      v_id <- dat_input %>%
+        dplyr::distinct(id) %>%
+        dplyr::pull()
+      dat_input <- purrr::map_df(seq_len(knn), ~dat_input %>%
+          dplyr::select(-id)) %>%
+        as.matrix()
+
+      # Prediction data -----
+      foo <- function(choice, dat_db) {
+        dat_db %>%
+          dplyr::filter(
+            dim_station %in% choice$dim_station
+          )
+      }
+
+      dat_output <- choice %>%
+        dplyr::do(foo(., dat_db)) %>%
+        dplyr::ungroup() %>%
+        select(dim_station, time_month, matches("msr_")) %>%
+        mutate(
+          # diff_time_month = time_month - dat_input %>%
+          #   dplyr::pull(time_month),
+          # diff_msr_temp_min = msr_temp_min - dat_input %>%
+          #   dplyr::pull(msr_temp_min),
+          # diff_msr_temp_max = msr_temp_max - dat_input %>%
+          #   dplyr::pull(msr_temp_max),
+          # diff_msr_temp_avg = msr_temp_avg - dat_input %>%
+          #   dplyr::pull(msr_temp_avg),
+          # diff_msr_precip_min = msr_precip_min - dat_input %>%
+          #   dplyr::pull(msr_precip_min),
+          # diff_msr_precip_max = msr_precip_max - dat_input %>%
+          #   dplyr::pull(msr_precip_max),
+          # diff_msr_precip_avg = msr_precip_avg - dat_input %>%
+          #   dplyr::pull(msr_precip_avg),
+          # diff_msr_sundur_avg = msr_sundur_avg - dat_input %>%
+          #   dplyr::pull(msr_sundur_avg)
+          diff_time_month = time_month - dat_input["time_month"],
+          diff_msr_temp_min = msr_temp_min - dat_input["msr_temp_min"],
+          diff_msr_temp_max = msr_temp_max - dat_input["msr_temp_max"],
+          diff_msr_temp_avg = msr_temp_avg - dat_input["msr_temp_avg"],
+          diff_msr_precip_min = msr_precip_min - dat_input["msr_precip_min"],
+          diff_msr_precip_max = msr_precip_max - dat_input["msr_precip_max"],
+          diff_msr_precip_avg = msr_precip_avg - dat_input["msr_precip_avg"],
+          diff_msr_sundur_avg = msr_sundur_avg - dat_input["msr_sundur_avg"]
+        )
+
+      # dat_output <- dat_output %>% mutate_if(is.double, round, 1)
+      dat_output <- dat_output %>% mutate_at(vars(matches("^diff")), round, 1)
+
+      dat_output <- bind_cols(
+        choice %>%
+          dplyr::ungroup() %>%
+          dplyr::select(dim_rank = rank),
+        dat_output
+      ) %>%
+        dplyr::mutate(
+          id = v_id
+        ) %>%
+        dplyr::select(
+          id,
+          dim_rank,
+          everything()
+        )
+
+      dat_distance_geo <- estimation$dat_distance_geo
+
+      # Join stations -----
+      dat_output_2 <- inner_join(
+        dat_output,
+        dat_station,
+        by = "dim_station"
+      ) %>%
+        left_join(
+          dat_distance_geo,
+          by = "dim_station"
+        ) %>%
+        select(
+          id,
+          dim_rank,
+          dim_country,
+          dim_station_name,
+          msr_distance,
+          time_month,
+          diff_time_month,
+          msr_temp_min,
+          diff_msr_temp_min,
+          msr_temp_max,
+          diff_msr_temp_max,
+          msr_temp_avg,
+          diff_msr_temp_avg,
+          msr_precip_min,
+          diff_msr_precip_min,
+          msr_precip_max,
+          diff_msr_precip_max,
+          msr_precip_avg,
+          diff_msr_precip_avg,
+          msr_sundur_avg,
+          diff_msr_sundur_avg,
+          dim_station,
+          dim_latitude,
+          dim_longitude,
+          dim_high,
+          everything()
+        )
+
+      # Return -----
+      list(
+        model_input = dat_input %>% tibble::as_tibble(),
+        model_output = dat_output_2
+      )
+    })
+  # names(model_output_list) <- paste0("input_", 1:length(model_output_list))
+
+  model_output <- list(
+    model_input = purrr::map_df(model_output_list, "model_input"),
+    model_output = purrr::map_df(model_output_list, "model_output")
+  )
+}
+
+model_estimate_inner_v3 <- function(
+  dat_input,
+  dat_db,
+  dat_station
+) {
+  # Compute geo distance -----
+  dat_msr_distance <- compute_geo_distance_v3(
+    p_1 = dat_input %>%
+      dplyr::select(matches("latitude|longitude")) %>%
+      dplyr::summarise_all(unique),
+    p_2 = dat_station
+  )
+
+  # Handle distance input -----
+  # Only keep stations that have distance <= user input
+  dat_list <- handle_input_distance_v2(
+    dat_input = dat_input,
+    dat_msr_distance = dat_msr_distance
+  )
+  # Update input and distance data:
+  dat_input <- dat_list$dat_input
+  dat_input_out <- dat_input
+  dat_msr_distance <- dat_list$dat_msr_distance
+
+  v_fct_scaling_dist <- dat_input %>%
+    dplyr::distinct(fct_scaling_dist) %>%
+    dplyr::pull(fct_scaling_dist)
+  tmp <- tibble::tibble(
+    dim_station = dat_msr_distance %>% dplyr::pull(dim_station) %>%
+      rep(length(v_fct_scaling_dist)) %>%
+      sort(),
+    fct_scaling_dist = v_fct_scaling_dist %>%
+      rep(nrow(dat_msr_distance))
+  ) %>%
+    dplyr::arrange(desc(fct_scaling_dist))
+  dat_msr_distance <- dat_msr_distance %>%
+    left_join(tmp, by = "dim_station")
+
+  # Scale -----
+  dat_msr_distance <- dat_msr_distance %>%
+    dplyr::group_by(fct_scaling_dist) %>%
+    dplyr::do(
+      pipe_compute_geo_distance_v6(.)
+    ) %>%
+    ungroup()
+
+  dat_time <- dat_db %>%
+    dplyr::select(
+      dim_station,
+      time_month
+    ) %>%
+    dplyr::mutate(
+      fct_scaling_time = dat_input %>%
+        dplyr::pull(fct_scaling_time) %>%
+        unique()
+    ) %>%
+    dplyr::group_by(fct_scaling_time) %>%
+    dplyr::do(
+      pipe_compute_time_v6(.)
+    ) %>%
+    ungroup()
+
+  # Handle DB -----
+  dat_list <- model_handle_input_db_v3(
+    dat_db = dat_db,
+    dat_time = dat_time,
+    dat_msr_distance = dat_msr_distance
+  )
+  dat_db <- dat_list$dat_db
+  dat_db_out <- dat_list$dat_db_out
+
+  # Create geo distance data frame ----
+  dat_distance_geo <- model_handle_dat_dist_geo_v2(dat_db)
+
+  # Early exit -----
+  if (!nrow(dat_db)) {
+    model_result <- list(
+      estimation_result= tibble::tibble(
+        fct_scaling = NA,
+        dim_station = NA,
+        index = NA,
+        rank = NA,
+        estimation_result = NA
+      ),
+      dat_distance_geo = dat_distance_geo,
+      dat_input = dat_input_out,
+      dat_db = dat_db_out
+    )
+    return(model_result)
+  }
+
+  # Scaling factors -----
+  fct_scaling_dist <- dat_input %>%
+    dplyr::distinct(fct_scaling_dist) %>%
+    dplyr::pull()
+  fct_scaling_time <- dat_input %>%
+    dplyr::distinct(fct_scaling_time) %>%
+    dplyr::pull()
+
+  # Drop all dims -----
+  dat_list <- model_handle_column_alignment(dat_db, dat_input)
+  dat_input <- dat_list$dat_input
+  dat_db <- dat_list$dat_db
+
+  # Align dimensions of input -----
+  dat_input <- purrr::map_df(
+    seq_len(dat_db %>% nrow()), ~dat_input
+  )
+
+  # Compute euclidean distance -----
+  # purrr::map2(dat_db, dat_input, pmap_inner_2)
+  dat_input_mat <- dat_input %>%
+    as.matrix()
+  dat_db_mat <- dat_db %>%
+    as.matrix()
+  vec_estimation_result <- sapply(1:nrow(dat_db), function(row) {
+    dat_db_this <- dat_db_mat[row, , drop = FALSE]
+    dat_input_this <- dat_input_mat[row, , drop = FALSE]
+    res <- philentropy:::euclidean(
+      dat_input_this, dat_db_this, testNA = FALSE)
+  })
+
+  estimation_result <- tibble::tibble(
+    # fct_scaling_time = fct_scaling_time,
+    # fct_scaling_dist = fct_scaling_dist,
+    dim_station = dat_db_out$dim_station,
+    estimation_result = vec_estimation_result
+  ) %>%
+    # dplyr::mutate(
+    #   id_scaling = str_glue("time={fct_scaling_time}_dist={fct_scaling_dist}")
+    # ) %>%
+    # dplyr::select(
+    #   id_scaling,
+    #   everything()
+    # ) %>%
+    # dplyr::select(
+    #   -fct_scaling_time,
+    #   -fct_scaling_dist,
+    # ) %>%
+  # Add distances for arranging:
+  dplyr::left_join(dat_distance_geo,
+    by = "dim_station"
+  ) %>%
+    dplyr::select(
+      -fct_scaling_dist,
+    ) %>%
+    # Add position index:
+    dplyr::mutate(index = row_number()) %>%
+    dplyr::arrange(estimation_result, msr_distance) %>%
+    dplyr::mutate(rank = row_number()) %>%
+    dplyr::select(
+      dim_station,
+      index,
+      rank,
+      estimation_result
+    )
+
+  list(
+    estimation_result= estimation_result,
+    dat_distance_geo = dat_distance_geo,
+    dat_input = dat_input_out,
+    dat_db = dat_db_out
+  )
+}

@@ -147,14 +147,14 @@ model_estimate_v2 <- function(
 }
 
 #' @export
-model_estimate_v5 <- function(
+model_estimate_v6 <- function(
   dat_input,
   dat_db,
   dat_station
 ) {
   # Get scaling factor(s) from settings -----
   if (TRUE) {
-    dat_fct_scaling = tibble(
+    dat_fct_scaling = tibble::tibble(
       fct_scaling_dist = unlist(settings$scaling$distances) %>%
         rep(nrow(dat_input)),
       fct_scaling_time = unlist(settings$scaling$time) %>%
@@ -194,16 +194,16 @@ model_estimate_v5 <- function(
       )
   } else {
     stop("Single set of scaling factors for all vars to be scaled not implemented yet")
-    dat_fct_scaling = tibble(
+    dat_fct_scaling = tibble::tibble(
       dat_fct_scaling = unlist(settings$scaling$distances)
     )
   }
 
-  dat_list <- model_handle_input_time_v2(
-    dat_input = dat_input,
-    dat_db = dat_db
-  )
-  dat_db <- dat_list$dat_db
+  # dat_list <- model_handle_input_time_v2(
+  #   dat_input = dat_input,
+  #   dat_db = dat_db
+  # )
+  # dat_db <- dat_list$dat_db
 
   # Prepare input for subsequent {purrr} pipes -----
   # dat_estimation_input <- model_prepare_estimation_input(
@@ -250,7 +250,7 @@ model_estimate_v5 <- function(
     function(v) list(v)[[1L]], .collate = "list")$.out
 
   df_estimate <- dat_input %>%
-    purrr::map(model_estimate_inner_v3,
+    purrr::map(model_estimate_inner_v4,
       dat_db = dat_db, dat_station = dat_station)
 
   df_estimate
@@ -308,7 +308,7 @@ model_estimate_inner_v2 <- function(.x) {
   v_fct_scaling_dist <- dat_input %>%
     dplyr::distinct(fct_scaling_dist) %>%
     dplyr::pull(fct_scaling_dist)
-  tmp <- tibble(
+  tmp <- tibble::tibble(
     dim_station = dat_msr_distance %>% dplyr::pull(dim_station) %>%
       rep(length(v_fct_scaling_dist)) %>%
       sort(),
@@ -341,7 +341,7 @@ model_estimate_inner_v2 <- function(.x) {
   # Early exit -----
   if (!nrow(dat_db)) {
     model_result <- list(
-      estimation_result= tibble(
+      estimation_result= tibble::tibble(
         fct_scaling = NA,
         dim_station = NA,
         index = NA,
@@ -384,7 +384,7 @@ model_estimate_inner_v2 <- function(.x) {
       dat_input_this, dat_db_this, testNA = FALSE)
   })
 
-  estimation_result <- tibble(
+  estimation_result <- tibble::tibble(
     fct_scaling = fct_scaling,
     dim_station = rep(dat_db_out$dim_station, nrow(dat_fct_scaling)),
     estimation_result = vec_estimation_result
@@ -414,7 +414,8 @@ model_estimate_inner_v2 <- function(.x) {
   )
 }
 
-model_estimate_inner_v3 <- function(
+#' @export
+model_estimate_inner_v4 <- function(
   dat_input,
   dat_db,
   dat_station
@@ -441,7 +442,7 @@ model_estimate_inner_v3 <- function(
   v_fct_scaling_dist <- dat_input %>%
     dplyr::distinct(fct_scaling_dist) %>%
     dplyr::pull(fct_scaling_dist)
-  tmp <- tibble(
+  tmp <- tibble::tibble(
     dim_station = dat_msr_distance %>% dplyr::pull(dim_station) %>%
       rep(length(v_fct_scaling_dist)) %>%
       sort(),
@@ -491,7 +492,7 @@ model_estimate_inner_v3 <- function(
   # Early exit -----
   if (!nrow(dat_db)) {
     model_result <- list(
-      estimation_result= tibble(
+      estimation_result= tibble::tibble(
         fct_scaling = NA,
         dim_station = NA,
         index = NA,
@@ -536,10 +537,11 @@ model_estimate_inner_v3 <- function(
       dat_input_this, dat_db_this, testNA = FALSE)
   })
 
-  estimation_result <- tibble(
+  estimation_result <- tibble::tibble(
     # fct_scaling_time = fct_scaling_time,
     # fct_scaling_dist = fct_scaling_dist,
     dim_station = dat_db_out$dim_station,
+    time_month = dat_db_out$time_month,
     estimation_result = vec_estimation_result
   ) %>%
     # dplyr::mutate(
@@ -566,6 +568,7 @@ model_estimate_inner_v3 <- function(
     dplyr::mutate(rank = row_number()) %>%
     dplyr::select(
       dim_station,
+      time_month,
       index,
       rank,
       estimation_result
@@ -601,7 +604,7 @@ pipe_model_estimate_inner <- function(
   #   rlang::syms() %>%
   #   purrr::map(function(s) expr(!!s))
   dat_estimation <- dat_estimation %>%
-    as_tibble()
+    tibble::as_tibble()
   cols_input <- dat_estimation %>%
     dplyr::select(matches("^input_")) %>%
     names() %>%
@@ -622,7 +625,7 @@ pipe_model_estimate_inner <- function(
   estimation <- philentropy:::euclidean(
     dat_input, dat_db, testNA = FALSE)
 
-  tibble(
+  tibble::tibble(
     fct_scaling = dat_estimation$fct_scaling %>% unique(),
     estimation = estimation
   )
@@ -719,7 +722,7 @@ model_predict_v3 <- function(
     # Ensure matrix -----
     dat_input <- model_prediction_index[[idx_input]]$dat_input
     dat_db <- model_prediction_index[[idx_input]]$dat_db %>%
-      as_tibble()
+      tibble::as_tibble()
 
     choice <- model_prediction_index[[idx_input]]$estimation_result_index
     dist_meassure <- unlist(lapply(names(choice), rep, knn))
@@ -949,7 +952,7 @@ model_apply_v1 <- function(
 
       # Return -----
       list(
-        model_input = dat_input %>% as_tibble(),
+        model_input = dat_input %>% tibble::as_tibble(),
         model_output = dat_output_2
       )
     })
@@ -961,7 +964,8 @@ model_apply_v1 <- function(
   )
 }
 
-model_apply_v2 <- function(
+#' @export
+model_apply_v3 <- function(
   model_estimation,
   dat_station,
   knn
@@ -987,7 +991,8 @@ model_apply_v2 <- function(
       foo <- function(choice, dat_db) {
         dat_db %>%
           dplyr::filter(
-            dim_station %in% choice$dim_station
+            dim_station %in% choice$dim_station,
+            time_month %in% choice$time_month
           )
       }
 
@@ -1083,7 +1088,7 @@ model_apply_v2 <- function(
 
       # Return -----
       list(
-        model_input = dat_input %>% as_tibble(),
+        model_input = dat_input %>% tibble::as_tibble(),
         model_output = dat_output_2
       )
     })
@@ -1410,25 +1415,35 @@ model_run_v3 <- function(
   model_output
 }
 
-model_run_v4 <- function(
+model_run_v5 <- function(
   dat_input,
   dat_db,
   dat_station,
   knn
 ) {
-  # Model estimation -----
-  model_estimation <- model_estimate_v5(
-    dat_input = dat_input,
-    dat_db = dat_db,
-    dat_station = dat_station
-  )
+  withProgress(message = 'Getting recommendations', value = 0, {
 
-  # Model output -----
-  model_output <- model_apply_v2(
-    model_estimation,
-    dat_station = dat_station,
-    knn = knn
-  )
+    incProgress(1/3, detail = "Estimating...")
+    # Model estimation -----
+    model_estimation <- model_estimate_v6(
+      dat_input = dat_input,
+      dat_db = dat_db,
+      dat_station = dat_station
+    )
+
+
+    incProgress(2/3, detail = "Selecting...")
+    # Model output -----
+    model_output <- model_apply_v3(
+      model_estimation,
+      dat_station = dat_station,
+      knn = knn
+    )
+
+    incProgress(3/3, detail = "Done...")
+
+    model_output
+  })
 
   model_output
 }
