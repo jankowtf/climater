@@ -10,6 +10,9 @@
 options(scipen = 10)
 library(shiny)
 options(shiny.suppressMissingContextError = TRUE)
+options(shiny.trace = TRUE)
+options(shiny.fullstacktrace = TRUE)
+options(shiny.error = recover)
 library(DT)
 if (basename(here::here()) == "climater") {
   devtools::load_all(here::here())
