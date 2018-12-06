@@ -541,7 +541,7 @@ model_estimate_inner_v4 <- function(
     # fct_scaling_time = fct_scaling_time,
     # fct_scaling_dist = fct_scaling_dist,
     dim_station = dat_db_out$dim_station,
-    time_month = dat_db_out$time_month,
+    uid = dat_db_out$uid,
     estimation_result = vec_estimation_result
   ) %>%
     # dplyr::mutate(
@@ -568,7 +568,7 @@ model_estimate_inner_v4 <- function(
     dplyr::mutate(rank = row_number()) %>%
     dplyr::select(
       dim_station,
-      time_month,
+      uid,
       index,
       rank,
       estimation_result
@@ -987,19 +987,22 @@ model_apply_v3 <- function(
           dplyr::select(-id)) %>%
         as.matrix()
 
+      # dat_input %>%
+      #   dplyr::select_if(~sum(!is.na(.)) > 0)
+
       # Prediction data -----
       foo <- function(choice, dat_db) {
         dat_db %>%
           dplyr::filter(
             dim_station %in% choice$dim_station,
-            time_month %in% choice$time_month
+            uid %in% choice$uid
           )
       }
 
       dat_output <- choice %>%
         dplyr::do(foo(., dat_db)) %>%
         dplyr::ungroup() %>%
-        select(dim_station, time_month, matches("msr_")) %>%
+        select(dim_station, uid, time_month, matches("msr_")) %>%
         mutate(
           # diff_time_month = time_month - dat_input %>%
           #   dplyr::pull(time_month),
@@ -1424,6 +1427,13 @@ model_run_v5 <- function(
   withProgress(message = 'Getting recommendations', value = 0, {
 
     incProgress(1/3, detail = "Estimating...")
+    # Add row UID -----
+    dat_db <- dat_db %>%
+      dplyr::mutate(
+        uid = 1:n()
+      )
+    # TODO 20181206: put in own function and find best place to call it
+
     # Model estimation -----
     model_estimation <- model_estimate_v6(
       dat_input = dat_input,
