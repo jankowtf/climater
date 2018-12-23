@@ -53,7 +53,21 @@ ui <- fluidPage(
       ticks = FALSE),
 
     selectInput("time_month", label = "Month of year",
-      choices = 1:12, selected = 7, multiple = FALSE),
+      # choices = 1:12, selected = 7, multiple = FALSE),
+      choices = list(
+        "January" = 1,
+        "Feburary" = 2,
+        "March" = 3,
+        "April" = 4,
+        "May" = 5,
+        "June" = 6,
+        "July" = 7,
+        "August" = 8,
+        "September" = 9,
+        "October" = 10,
+        "November" = 11,
+        "December" = 12
+      ), selected = 7, multiple = FALSE),
     # selectizeInput("time_month", label = "Month of year",
     #   choices = 1:12, selected = 7),
     # sliderInput("time_month", label = "Month of year",
@@ -179,7 +193,8 @@ ui <- fluidPage(
 
   mainPanel(
     tabsetPanel(type = "tabs",
-      tabPanel("Recommendations", shiny::dataTableOutput("model_output")),
+      tabPanel("Recommendation", shiny::dataTableOutput("model_output_prime")),
+      tabPanel("Alternatives", shiny::dataTableOutput("model_output_alts")),
       tabPanel("Inputs", shiny::dataTableOutput("model_input")),
       tabPanel("Geo lat auto", shiny::textOutput("geo_lat_auto")),
       tabPanel("Geo long auto", shiny::textOutput("geo_long_auto")),
@@ -244,11 +259,11 @@ server <- function(input, output, session) {
     dat
   })
 
-  dat_output_react <- eventReactive(input$do, {
+  dat_model_output_prime_react <- eventReactive(input$do, {
     dat_input <- dat_input_react()
     knn <- as.numeric(input$knn)
 
-    model_output <- model_run_v5(
+    model_output <- model_run_prime_v1(
       dat_input = dat_input,
       dat_db = dat_db_msr,
       dat_station = dat_station,
@@ -258,21 +273,67 @@ server <- function(input, output, session) {
     model_output
   })
 
-  output$model_output <- shiny::renderDataTable({
+  dat_model_output_alts_react <- eventReactive(input$do, {
+    dat_input <- dat_input_react()
+    knn <- as.numeric(input$knn)
+
+    model_output <- model_run_v6(
+      dat_input = dat_input,
+      dat_db = dat_db_msr,
+      dat_station = dat_station,
+      knn = knn
+    )
+
+    model_output
+  })
+
+  output$model_output_prime <- shiny::renderDataTable({
     # mtcars
-    model_output <- dat_output_react()$model_output %>%
+    model_output <- dat_model_output_prime_react()$model_output %>%
+      dat_transform_monthnumbers_to_monthnames() %>%
+      dat_transform_relevant_columns_minimal() %>%
+      dplyr::mutate(msr_distance = msr_distance %>% round(4)) %>%
+      dat_transform_names_to_label()
+
+    # print(nrow(dat_model_output_prime_react()$model_output))
+
+    model_output
+
+    # row.names(model_output) <- as.character(1:nrow(model_output))
+    # model_output
+
+  }, options = list(
+    scrollX = TRUE,
+    scrollY = "400px",
+    lengthChange = FALSE,
+    searching = FALSE,
+    order = list(list(1, 'asc')))
+  )
+  # TODO-20180705: encapsulate column selection in own function to be more
+  # flexible and make code easier to maintain
+
+  output$model_output_alts <- shiny::renderDataTable({
+    # mtcars
+    model_output <- dat_model_output_alts_react()$model_output %>%
+      dat_transform_monthnumbers_to_monthnames() %>%
       dat_transform_relevant_columns() %>%
       dplyr::mutate(msr_distance = msr_distance %>% round(4)) %>%
       dat_transform_names_to_label()
 
     model_output
-
-  }, options = list(scrollX = TRUE, scrollY = "400px", pageLength = 100))
+  }, options = list(
+    scrollX = TRUE,
+    scrollY = "400px",
+    pageLength = 100,
+    lengthChange = FALSE,
+    searching = FALSE,
+    order = list(list(1, 'asc')))
+  )
   # TODO-20180705: encapsulate column selection in own function to be more
   # flexible and make code easier to maintain
 
   output$model_input <- shiny::renderDataTable({
-    dat_output_react()$model_input %>%
+    dat_model_output_alts_react()$model_input %>%
       dat_transform_names_to_label()
   }, options = list(scrollX = TRUE))
 

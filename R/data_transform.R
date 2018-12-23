@@ -690,6 +690,30 @@ data_trans_db_msr_v2 <- function(dat_base) {
 }
 
 #' @export
+dat_transform_relevant_columns_minimal <- function(dat) {
+  dat <- dat %>%
+    dplyr::select(
+      # id,
+      # dim_rank,
+      dim_country,
+      dim_station_name,
+      msr_distance,
+      # dim_latitude,
+      # dim_longitude,
+      time_month,
+      # diff_time_month,
+      msr_temp_min,
+      # diff_msr_temp_min,
+      msr_temp_max,
+      # diff_msr_temp_max,
+      msr_precip_avg,
+      # diff_msr_precip_avg,
+      msr_sundur_avg,
+      # diff_msr_sundur_avg
+    )
+}
+
+#' @export
 dat_transform_relevant_columns <- function(dat) {
   dat <- dat %>%
     dplyr::select(
@@ -701,15 +725,36 @@ dat_transform_relevant_columns <- function(dat) {
       # dim_latitude,
       # dim_longitude,
       time_month,
-      diff_time_month,
+      # diff_time_month,
       msr_temp_min,
-      diff_msr_temp_min,
+      # diff_msr_temp_min,
       msr_temp_max,
-      diff_msr_temp_max,
+      # diff_msr_temp_max,
       msr_precip_avg,
-      diff_msr_precip_avg,
+      # diff_msr_precip_avg,
       msr_sundur_avg,
-      diff_msr_sundur_avg
+      # diff_msr_sundur_avg
+    )
+}
+
+#' @export
+dat_transform_monthnumbers_to_monthnames <- function(dat) {
+  dat <- dat %>%
+    dplyr::mutate(
+      time_month = case_when(
+        time_month == 1 ~ "January",
+        time_month == 2 ~ "February",
+        time_month == 3 ~ "March",
+        time_month == 4 ~ "April",
+        time_month == 5 ~ "May",
+        time_month == 6 ~ "June",
+        time_month == 7 ~ "July",
+        time_month == 8 ~ "August",
+        time_month == 9 ~ "September",
+        time_month == 10 ~ "October",
+        time_month == 11 ~ "November",
+        time_month == 12 ~ "December"
+      )
     )
 }
 

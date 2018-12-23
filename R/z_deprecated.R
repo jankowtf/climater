@@ -1416,3 +1416,154 @@ model_estimate_inner_v3 <- function(
     dat_db = dat_db_out
   )
 }
+
+model_run_v5 <- function(
+  dat_input,
+  dat_db,
+  dat_station,
+  knn
+) {
+  .Deprecated("model_run_v6")
+  withProgress(message = 'Getting recommendations', value = 0, {
+
+    incProgress(1/3, detail = "Estimating...")
+    # Add row UID -----
+    dat_db <- dat_db %>%
+      dplyr::mutate(
+        uid = 1:n()
+      )
+    # TODO 20181206: put in own function and find best place to call it
+
+    # Model estimation -----
+    model_estimation <- model_estimate_v6(
+      dat_input = dat_input,
+      dat_db = dat_db,
+      dat_station = dat_station
+    )
+
+
+    incProgress(2/3, detail = "Selecting...")
+    # Model output -----
+    model_output <- model_apply_v3(
+      model_estimation,
+      dat_station = dat_station,
+      knn = knn
+    )
+
+    incProgress(3/3, detail = "Done...")
+
+    model_output
+  })
+
+  model_output
+}
+
+model_estimate_v6 <- function(
+  dat_input,
+  dat_db,
+  dat_station
+) {
+  .Deprecated("model_estimate_v7")
+  # Get scaling factor(s) from settings -----
+  if (TRUE) {
+    dat_fct_scaling = tibble::tibble(
+      fct_scaling_dist = unlist(settings$scaling$distances) %>%
+        rep(nrow(dat_input)),
+      fct_scaling_time = unlist(settings$scaling$time) %>%
+        rep(nrow(dat_input))
+    )
+
+    # Expand -----
+    dat_fct_scaling <- dat_fct_scaling %>%
+      tidyr::expand(fct_scaling_dist, fct_scaling_time)
+
+    # Add columns for join -----
+    # dat_fct_scaling <- dat_fct_scaling %>%
+    #   dplyr::mutate(
+    #     time_month = dat_input %>%
+    #       dplyr::select_at(if("time_month" %in% names(.))
+    #         "time_month" else integer(0)) %>%
+    #       dplyr::pull()
+    #   )
+    # KEEP AS REFERENCE
+    dat_fct_scaling <- dat_fct_scaling %>%
+      dplyr::mutate(
+        time_month = dat_input %>%
+          dplyr::pull(time_month),
+        msr_distance = dat_input %>%
+          dplyr::pull(msr_distance)
+      )
+
+    dat_input <- dat_input %>%
+      # dplyr::select(time_month) %>%
+      dplyr::left_join(
+        dat_fct_scaling,
+        by = intersect(names(dat_input), names(dat_fct_scaling))
+      ) %>%
+      dplyr::mutate(
+        time_month_scaled = time_month * fct_scaling_time,
+        msr_distance_scaled = msr_distance * fct_scaling_dist
+      )
+  } else {
+    stop("Single set of scaling factors for all vars to be scaled not implemented yet")
+    dat_fct_scaling = tibble::tibble(
+      dat_fct_scaling = unlist(settings$scaling$distances)
+    )
+  }
+
+  # dat_list <- model_handle_input_time_v2(
+  #   dat_input = dat_input,
+  #   dat_db = dat_db
+  # )
+  # dat_db <- dat_list$dat_db
+
+  # Prepare input for subsequent {purrr} pipes -----
+  # dat_estimation_input <- model_prepare_estimation_input(
+  #   dat_input,
+  #   dat_db,
+  #   dat_station
+  # )
+  #
+  # # Compute distance for each input vector -----
+  # df_estimate <- dat_estimation_input %>%
+  #   purrr::map(model_estimate_inner_v2)
+
+  if (FALSE) {
+    dat_db <- purrr::map(
+      seq_len(nrow(dat_input)), ~dat_db
+    )
+    dat_station <- purrr::map(
+      seq_len(nrow(dat_input)), ~dat_station
+    )
+    dat_input <- purrrlyr::by_row(dat_input,
+      function(v) list(v)[[1L]], .collate = "list")$.out
+
+    dat_estimation_input <- purrr::pmap(list(dat_input, dat_db, dat_station),
+      function(a, b, c) {
+        list(
+          dat_input = a,
+          dat_db = b,
+          dat_station = c
+        )
+      })
+    df_estimate <- dat_estimation_input %>%
+      purrr::map(model_estimate_inner_v2)
+  }
+
+  dat_input <- dat_input %>%
+    dplyr::mutate(
+      id = str_glue("time={fct_scaling_time}_dist={fct_scaling_dist}")
+    ) %>%
+    dplyr::select(
+      id,
+      everything()
+    )
+  dat_input <- purrrlyr::by_row(dat_input,
+    function(v) list(v)[[1L]], .collate = "list")$.out
+
+  df_estimate <- dat_input %>%
+    purrr::map(model_estimate_inner_v4,
+      dat_db = dat_db, dat_station = dat_station)
+
+  df_estimate
+}

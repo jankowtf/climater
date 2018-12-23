@@ -147,23 +147,64 @@ model_estimate_v2 <- function(
 }
 
 #' @export
-model_estimate_v6 <- function(
+model_estimate_prime_v1 <- function(
+  dat_input,
+  dat_db,
+  dat_station
+) {
+  dat_input <- dat_input %>%
+    dplyr::mutate(
+      id = "0"
+    ) %>%
+    dplyr::select(
+      id,
+      everything()
+    )
+
+  # Filter based on time input -----
+  dat_list <- model_handle_input_time_v2(
+    dat_input = dat_input,
+    dat_db = dat_db
+  )
+  dat_db <- dat_list$dat_db
+
+  df_estimate <- model_estimate_prime_inner_v1(
+    dat_input = dat_input,
+    dat_db = dat_db,
+    dat_station = dat_station
+  )
+
+  list(df_estimate)
+}
+
+#' @export
+model_estimate_v7 <- function(
   dat_input,
   dat_db,
   dat_station
 ) {
   # Get scaling factor(s) from settings -----
   if (TRUE) {
-    dat_fct_scaling = tibble::tibble(
-      fct_scaling_dist = unlist(settings$scaling$distances) %>%
-        rep(nrow(dat_input)),
-      fct_scaling_time = unlist(settings$scaling$time) %>%
-        rep(nrow(dat_input))
-    )
+    # Expand scaling factor combinations -----
+    # dat_fct_scaling = tibble::tibble(
+    #   fct_scaling_dist = unlist(settings$scaling$distances) %>%
+    #     rep(nrow(dat_input)),
+    #   fct_scaling_time = unlist(settings$scaling$time) %>%
+    #     rep(nrow(dat_input))
+    # )
+    # dat_fct_scaling <- dat_fct_scaling %>%
+    #   tidyr::expand(fct_scaling_dist, fct_scaling_time)
+    # KEEP AS REFERENCE
 
-    # Expand -----
+    v_fct_scaling_dist <- unlist(settings$scaling$distances) %>%
+      rep(nrow(dat_input))
+    v_fct_scaling_time <- unlist(settings$scaling$time) %>%
+      rep(nrow(dat_input))
+    dat_fct_scaling <- expand.grid(v_fct_scaling_dist, v_fct_scaling_time) %>%
+      tibble::as_tibble()
+    names(dat_fct_scaling) <- c("fct_scaling_dist", "fct_scaling_time")
     dat_fct_scaling <- dat_fct_scaling %>%
-      tidyr::expand(fct_scaling_dist, fct_scaling_time)
+      dplyr::arrange(fct_scaling_dist, fct_scaling_time)
 
     # Add columns for join -----
     # dat_fct_scaling <- dat_fct_scaling %>%
@@ -174,6 +215,7 @@ model_estimate_v6 <- function(
     #       dplyr::pull()
     #   )
     # KEEP AS REFERENCE
+
     dat_fct_scaling <- dat_fct_scaling %>%
       dplyr::mutate(
         time_month = dat_input %>%
@@ -415,11 +457,129 @@ model_estimate_inner_v2 <- function(.x) {
 }
 
 #' @export
+model_estimate_prime_inner_v1 <- function(
+  dat_input,
+  dat_db,
+  dat_station
+) {
+  # Compute geo distance -----
+  dat_msr_distance <- compute_geo_distance_v3(
+    p_1 = dat_input %>%
+      dplyr::select(matches("latitude|longitude")) %>%
+      dplyr::summarise_all(unique),
+    p_2 = dat_station
+  )
+
+  # Handle distance input -----
+  # Only keep stations that have distance <= user input
+  dat_list <- handle_input_distance_v2(
+    dat_input = dat_input,
+    dat_msr_distance = dat_msr_distance
+  )
+  # Update input and distance data:
+  dat_input <- dat_list$dat_input
+  dat_input_out <- dat_input
+  dat_msr_distance <- dat_list$dat_msr_distance
+
+  dat_time <- dat_db %>%
+    dplyr::select(
+      dim_station,
+      time_month
+    )
+
+  # Handle DB -----
+  dat_list <- model_handle_input_db_v3(
+    dat_db = dat_db,
+    dat_time = dat_time,
+    dat_msr_distance = dat_msr_distance
+  )
+  dat_db <- dat_list$dat_db
+  dat_db_out <- dat_list$dat_db_out
+
+  # Create geo distance data frame ----
+  dat_distance_geo <- model_prime_handle_dat_dist_geo_v1(dat_db)
+
+  # Early exit -----
+  if (!nrow(dat_db)) {
+    model_result <- list(
+      estimation_result= tibble::tibble(
+        dim_station = NA,
+        index = NA,
+        rank = NA,
+        estimation_result = NA
+      ),
+      dat_distance_geo = dat_distance_geo,
+      dat_input = dat_input_out,
+      dat_db = dat_db_out
+    )
+    return(model_result)
+  }
+
+  # Drop all dims -----
+  dat_list <- model_handle_column_alignment(dat_db, dat_input)
+  dat_input <- dat_list$dat_input
+  dat_db <- dat_list$dat_db
+
+  # Align dimensions of input -----
+  dat_input <- purrr::map_df(
+    seq_len(dat_db %>% nrow()), ~dat_input
+  )
+
+  # Compute euclidean distance -----
+  # purrr::map2(dat_db, dat_input, pmap_inner_2)
+  dat_input_mat <- dat_input %>%
+    as.matrix()
+  dat_db_mat <- dat_db %>%
+    as.matrix()
+  vec_estimation_result <- sapply(1:nrow(dat_db), function(row) {
+    dat_db_this <- dat_db_mat[row, , drop = FALSE]
+    dat_input_this <- dat_input_mat[row, , drop = FALSE]
+    res <- philentropy:::euclidean(
+      dat_input_this, dat_db_this, testNA = FALSE)
+  })
+
+  estimation_result <- tibble::tibble(
+    dim_station = dat_db_out$dim_station,
+    uid = dat_db_out$uid,
+    estimation_result = vec_estimation_result
+  ) %>%
+    # Add distances for arranging:
+    dplyr::left_join(dat_distance_geo,
+      by = "dim_station"
+    ) %>%
+    # Add position index:
+    dplyr::mutate(index = row_number()) %>%
+    dplyr::arrange(estimation_result, msr_distance) %>%
+    dplyr::mutate(rank = row_number()) %>%
+    dplyr::select(
+      dim_station,
+      uid,
+      index,
+      rank,
+      # msr_distance,
+      estimation_result
+    )
+
+  list(
+    estimation_result= estimation_result,
+    dat_distance_geo = dat_distance_geo,
+    dat_input = dat_input_out,
+    dat_db = dat_db_out
+  )
+}
+
+#' @export
 model_estimate_inner_v4 <- function(
   dat_input,
   dat_db,
   dat_station
 ) {
+  # if (dat_input$id == "time=0_dist=0.0003") {
+  # if (dat_input$id == "time=0.25_dist=1") {
+  #   message("DEBUG")
+  #   message("DEBUG")
+  # }
+
   # Compute geo distance -----
   dat_msr_distance <- compute_geo_distance_v3(
     p_1 = dat_input %>%
@@ -996,7 +1156,12 @@ model_apply_v3 <- function(
           dplyr::filter(
             dim_station %in% choice$dim_station,
             uid %in% choice$uid
-          )
+          ) %>%
+          dplyr::left_join(
+            choice %>% select(uid, rank),
+            by = "uid"
+          ) %>%
+          dplyr::arrange(rank)
       }
 
       dat_output <- choice %>%
@@ -1418,15 +1583,47 @@ model_run_v3 <- function(
   model_output
 }
 
-model_run_v5 <- function(
+#' @export
+model_run_prime_v1 <- function(
+  dat_input,
+  dat_db,
+  dat_station,
+  knn
+) {
+  # Add row UID -----
+  dat_db <- dat_db %>%
+    dplyr::mutate(
+      uid = 1:n()
+    )
+  # TODO 20181206: put in own function and find best place to call it
+
+  # Model estimation -----
+  model_estimation <- model_estimate_prime_v1(
+    dat_input = dat_input,
+    dat_db = dat_db,
+    dat_station = dat_station
+  )
+
+  # Model output -----
+  model_output <- model_apply_v3(
+    model_estimation,
+    dat_station = dat_station,
+    knn = knn
+  )
+
+  model_output
+}
+
+#' @export
+model_run_v6 <- function(
   dat_input,
   dat_db,
   dat_station,
   knn
 ) {
   withProgress(message = 'Getting recommendations', value = 0, {
-
     incProgress(1/3, detail = "Estimating...")
+
     # Add row UID -----
     dat_db <- dat_db %>%
       dplyr::mutate(
@@ -1435,7 +1632,7 @@ model_run_v5 <- function(
     # TODO 20181206: put in own function and find best place to call it
 
     # Model estimation -----
-    model_estimation <- model_estimate_v6(
+    model_estimation <- model_estimate_v7(
       dat_input = dat_input,
       dat_db = dat_db,
       dat_station = dat_station
@@ -1465,6 +1662,7 @@ handle_input_distance_v2 <- function(
 ) {
   # col_msr_distance <- settings$name_mapping$msr_distance$key
   col_msr_distance <- rlang::sym("msr_distance")
+  col_msr_distance_scaled <- rlang::sym("msr_distance_scaled")
   # TODO 20181129: refactor column names from settings
 
   idx <- colnames(dat_input) %>%
@@ -1479,7 +1677,10 @@ handle_input_distance_v2 <- function(
         !!col_msr_distance <= value_msr_distance
       )
       dat_input <- dat_input %>%
-        dplyr::mutate(!!col_msr_distance := 0)
+        dplyr::mutate(
+          !!col_msr_distance := 0,
+          !!col_msr_distance_scaled := 0
+        )
     }
   }
 
@@ -1570,6 +1771,25 @@ model_handle_input_db_v3 <- function(
     dat_db = dat_db,
     dat_db_out = dat_db_out
   )
+}
+
+#' @export
+model_prime_handle_dat_dist_geo_v1 <- function(
+  dat_db
+) {
+  df_dist_geo <- dat_db %>%
+    select(
+      dim_station,
+      msr_distance
+    ) %>%
+    group_by(
+      dim_station
+    ) %>%
+    summarise(
+      msr_distance = unique(msr_distance)
+    ) %>%
+    ungroup()
+  # TODO 20181122: tidy eval for column names
 }
 
 model_handle_dat_dist_geo_v2 <- function(
