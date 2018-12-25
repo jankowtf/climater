@@ -209,6 +209,13 @@ ui <- fluidPage(
 # Server ------------------------------------------------------------------
 
 server <- function(input, output, session) {
+  # Time transformation into cyclical variable(s) -----
+  dat_db_msr <- dat_db_msr %>%
+    dplyr::mutate(
+      time_month_sin = sin(2 * pi * time_month / 12),
+      time_month_cos = cos(2 * pi * time_month / 12)
+    )
+
   dat_distance_react <- reactive({
     dat_geo <- tibble::tibble(
       dim_latitude = ifelse(is.null(v <- input$geo_lat_auto), 1, v),
@@ -251,8 +258,21 @@ server <- function(input, output, session) {
       msr_distance = as.numeric(input$msr_distance)
     )
 
+    # Time transformation into cyclical variable(s) -----
+    dat <- dat %>%
+      dplyr::mutate(
+        time_month_sin = sin(2 * pi * time_month / 12),
+        time_month_cos = cos(2 * pi * time_month / 12)
+      )
+
     msr_inputs_chosen <- input$msr_inputs_chosen
     msr_inputs_chosen <- c("dim_latitude", "dim_longitude", msr_inputs_chosen)
+
+    # Implicit inclusion of cos and sin verion of `time_month` -----
+    if (any(str_detect(msr_inputs_chosen, "time"))) {
+      msr_inputs_chosen <- c(msr_inputs_chosen, "time_month_sin", "time_month_cos")
+    }
+
     # dat[ , msr_inputs_chosen]
     msr_inputs_chosen <- names(dat) %in% msr_inputs_chosen
     dat[ , !msr_inputs_chosen] <- NA
@@ -277,7 +297,7 @@ server <- function(input, output, session) {
     dat_input <- dat_input_react()
     knn <- as.numeric(input$knn)
 
-    model_output <- model_run_v6(
+    model_output <- model_run_v7(
       dat_input = dat_input,
       dat_db = dat_db_msr,
       dat_station = dat_station,

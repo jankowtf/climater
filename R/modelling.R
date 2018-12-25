@@ -178,7 +178,7 @@ model_estimate_prime_v1 <- function(
 }
 
 #' @export
-model_estimate_v7 <- function(
+model_estimate_v8 <- function(
   dat_input,
   dat_db,
   dat_station
@@ -232,6 +232,8 @@ model_estimate_v7 <- function(
       ) %>%
       dplyr::mutate(
         time_month_scaled = time_month * fct_scaling_time,
+        time_month_sin_scaled = time_month_sin * fct_scaling_time,
+        time_month_cos_scaled = time_month_cos * fct_scaling_time,
         msr_distance_scaled = msr_distance * fct_scaling_dist
       )
   } else {
@@ -292,7 +294,7 @@ model_estimate_v7 <- function(
     function(v) list(v)[[1L]], .collate = "list")$.out
 
   df_estimate <- dat_input %>%
-    purrr::map(model_estimate_inner_v4,
+    purrr::map(model_estimate_inner_v5,
       dat_db = dat_db, dat_station = dat_station)
 
   df_estimate
@@ -569,7 +571,7 @@ model_estimate_prime_inner_v1 <- function(
 }
 
 #' @export
-model_estimate_inner_v4 <- function(
+model_estimate_inner_v5 <- function(
   dat_input,
   dat_db,
   dat_station
@@ -624,7 +626,9 @@ model_estimate_inner_v4 <- function(
   dat_time <- dat_db %>%
     dplyr::select(
       dim_station,
-      time_month
+      time_month,
+      time_month_sin,
+      time_month_cos
     ) %>%
     dplyr::mutate(
       fct_scaling_time = dat_input %>%
@@ -633,7 +637,7 @@ model_estimate_inner_v4 <- function(
     ) %>%
     dplyr::group_by(fct_scaling_time) %>%
     dplyr::do(
-      pipe_compute_time_v6(.)
+      pipe_compute_time_v7(.)
     ) %>%
     ungroup()
 
@@ -675,7 +679,7 @@ model_estimate_inner_v4 <- function(
     dplyr::pull()
 
   # Drop all dims -----
-  dat_list <- model_handle_column_alignment(dat_db, dat_input)
+  dat_list <- model_handle_column_alignment_v2(dat_db, dat_input)
   dat_input <- dat_list$dat_input
   dat_db <- dat_list$dat_db
 
@@ -800,12 +804,14 @@ pipe_compute_geo_distance_v6 <- function(
     )
 }
 
-pipe_compute_time_v6 <- function(
+pipe_compute_time_v7 <- function(
   dat_time
 ) {
   dat_time %>%
     dplyr::mutate(
-      time_month_scaled = time_month * fct_scaling_time
+      time_month_scaled = time_month * fct_scaling_time,
+      time_month_sin_scaled = time_month_sin * fct_scaling_time,
+      time_month_cos_scaled = time_month_cos * fct_scaling_time
     )
 }
 
@@ -1615,7 +1621,7 @@ model_run_prime_v1 <- function(
 }
 
 #' @export
-model_run_v6 <- function(
+model_run_v7 <- function(
   dat_input,
   dat_db,
   dat_station,
@@ -1632,7 +1638,7 @@ model_run_v6 <- function(
     # TODO 20181206: put in own function and find best place to call it
 
     # Model estimation -----
-    model_estimation <- model_estimate_v7(
+    model_estimation <- model_estimate_v8(
       dat_input = dat_input,
       dat_db = dat_db,
       dat_station = dat_station
@@ -1837,7 +1843,7 @@ model_handle_drop_dims_v2 <- function(dat_db, dat_input) {
   )
 }
 
-model_handle_column_alignment <- function(dat_db, dat_input) {
+model_handle_column_alignment_v2 <- function(dat_db, dat_input) {
   select_non_na <- function(x) {
     all(!is.na(x))
   }
@@ -1857,6 +1863,12 @@ model_handle_column_alignment <- function(dat_db, dat_input) {
       sapply(function(x) x %>% str_replace("_scaled$", ""))
     cols <- cols[!cols %in% cols_unscaled]
   }
+
+  # Ensure `time_month` is dropped in favor of sin and cos version -----
+  if (any(idx <- str_detect(cols, "time_month_scaled$"))) {
+    cols <- cols[!idx]
+  }
+
   cols <- cols %>%
     rlang::syms()
   dat_db <- dat_db %>%
