@@ -14,18 +14,21 @@ library(shiny)
 # options(shiny.fullstacktrace = TRUE)
 # options(shiny.error = recover)
 library(DT)
+# library(promises)
+# library(future)
 if (basename(here::here()) == "climater") {
   devtools::load_all(here::here())
 } else {
   library(climater)
 }
-
 settings <- default_settings()
 settings$output$show <- FALSE
 set_global_data_repo("repo_1", settings = settings)
 # set_global_data_repo("repo_2", settings = settings)
 dat_db_0 <- data_read_db(vsn = "v3")
 source("app_load_data.R")
+
+# plan(multiprocess)
 
 # UI ----------------------------------------------------------------------
 
@@ -45,13 +48,6 @@ ui <- fluidPage(
   ),
 
   inputPanel(
-    sliderInput("msr_distance", label = "Max. distance to destination",
-      min = 0,
-      max = 10000,
-      value = 5000,
-      step = 1,
-      ticks = FALSE),
-
     selectInput("time_month", label = "Month of year",
       # choices = 1:12, selected = 7, multiple = FALSE),
       choices = list(
@@ -68,10 +64,13 @@ ui <- fluidPage(
         "November" = 11,
         "December" = 12
       ), selected = 7, multiple = FALSE),
-    # selectizeInput("time_month", label = "Month of year",
-    #   choices = 1:12, selected = 7),
-    # sliderInput("time_month", label = "Month of year",
-    #   min = 1, max = 12, value = 7, step = 1),
+
+    sliderInput("msr_distance", label = "Max. distance to destination",
+      min = 0,
+      max = 10000,
+      value = 5000,
+      step = 1,
+      ticks = FALSE),
 
     sliderInput("msr_temp_min", label = "Min. temperature",
       min = min(dat_db_0$msr_temp_min, na.rm = TRUE) %>% floor(),
@@ -116,10 +115,6 @@ ui <- fluidPage(
       step = 1,
       ticks = FALSE),
 
-    # shinyWidgets::sliderTextInput("msr_precip_avg", label = "Rain days per month",
-    #   choices = input_precip(),
-    #   selected = 0, grid = TRUE),
-
     sliderInput("msr_sundur_avg", label = "Sunshine hours per day",
       min = min(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% floor(),
       max = max(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% ceiling(),
@@ -129,21 +124,21 @@ ui <- fluidPage(
   ),
 
   inputPanel(
-    shiny::checkboxGroupInput("msr_inputs_chosen", label = "Choose inputs to use",
-      choices = c(
-        "Distance" = "msr_distance",
-        # "Max. distance to destination" = "msr_distance",
-        "Month" = "time_month",
-        "Min. temperature" = "msr_temp_min",
-        "Max. temperature" = "msr_temp_max",
-        # "msr_temp_avg",
-        # "msr_precip_min",
-        # "msr_precip_max",
-        "Rain days" = "msr_precip_avg",
-        "Sunshine hours" = "msr_sundur_avg"
-      ),
-      selected = c("time_month", "msr_temp_avg")
-    ),
+    #   shiny::checkboxGroupInput("msr_inputs_chosen", label = "Choose inputs to use",
+    #     choices = c(
+    #       "Distance" = "msr_distance",
+    #       # "Max. distance to destination" = "msr_distance",
+    #       "Month" = "time_month",
+    #       "Min. temperature" = "msr_temp_min",
+    #       "Max. temperature" = "msr_temp_max",
+    #       # "msr_temp_avg",
+    #       # "msr_precip_min",
+    #       # "msr_precip_max",
+    #       "Rain days" = "msr_precip_avg",
+    #       "Sunshine hours" = "msr_sundur_avg"
+    #     ),
+    #     selected = c("time_month", "msr_temp_avg")
+    #   ),
 
     # shiny::selectInput("msr_inputs_chosen", label = "Choose inputs to use",
     #   choices = list(
@@ -163,8 +158,8 @@ ui <- fluidPage(
     #   selected = c("time_month", "msr_temp_avg")
     # ),
 
-    selectInput("knn", label = "Number of recommendations",
-      choices = 1:50, selected = 3),
+    # selectInput("knn", label = "Number of recommendations",
+    #   choices = 1:50, selected = 3),
 
     actionButton("do", "Submit", icon = icon("refresh")),
 
@@ -191,19 +186,45 @@ ui <- fluidPage(
               ')
   ),
 
-  mainPanel(
-    tabsetPanel(type = "tabs",
-      tabPanel("Recommendation", shiny::dataTableOutput("model_output_prime")),
-      tabPanel("Alternatives", shiny::dataTableOutput("model_output_alts")),
-      tabPanel("Inputs", shiny::dataTableOutput("model_input")),
-      tabPanel("Geo lat auto", shiny::textOutput("geo_lat_auto")),
-      tabPanel("Geo long auto", shiny::textOutput("geo_long_auto")),
-      tabPanel("Geo lat", shiny::textOutput("geo_lat")),
-      tabPanel("Geo long", shiny::textOutput("geo_long")),
-      tabPanel("Distances", shiny::textOutput("dat_distances"))
-    ),
-    width = 12
-  )
+  if (!settings$dev_mode) {
+    if (settings$ui_mode_tabs) {
+      mainPanel(
+        tabsetPanel(type = "tabs",
+          tabPanel("Dream location",
+            h3("Your dream location"),
+            shiny::dataTableOutput("model_output_prime")
+          ),
+          tabPanel("Alternatives",
+            h3("Alternative suggestions"),
+            shiny::dataTableOutput("model_output_alts")
+          )
+        ),
+        width = 12
+      )
+    } else {
+      mainPanel(
+        h3("Your dream location"),
+        shiny::dataTableOutput("model_output_prime"),
+        h3("Alternative suggestions"),
+        shiny::dataTableOutput("model_output_alts"),
+        width = 12
+      )
+    }
+  } else {
+    mainPanel(
+      tabsetPanel(type = "tabs",
+        tabPanel("Dream location", shiny::dataTableOutput("model_output_prime")),
+        tabPanel("Alternatives", shiny::dataTableOutput("model_output_alts")),
+        tabPanel("Inputs", shiny::dataTableOutput("model_input")),
+        tabPanel("Geo lat auto", shiny::textOutput("geo_lat_auto")),
+        tabPanel("Geo long auto", shiny::textOutput("geo_long_auto")),
+        tabPanel("Geo lat", shiny::textOutput("geo_lat")),
+        tabPanel("Geo long", shiny::textOutput("geo_long")),
+        tabPanel("Distances", shiny::textOutput("dat_distances"))
+      ),
+      width = 12
+    )
+  }
 )
 
 # Server ------------------------------------------------------------------
@@ -265,7 +286,20 @@ server <- function(input, output, session) {
         time_month_cos = cos(2 * pi * time_month / 12)
       )
 
-    msr_inputs_chosen <- input$msr_inputs_chosen
+    # msr_inputs_chosen <- input$msr_inputs_chosen
+    msr_inputs_chosen <- c(
+      "Distance" = "msr_distance",
+      # "Max. distance to destination" = "msr_distance",
+      "Month" = "time_month",
+      "Min. temperature" = "msr_temp_min",
+      "Max. temperature" = "msr_temp_max",
+      # "msr_temp_avg",
+      # "msr_precip_min",
+      # "msr_precip_max",
+      "Rain days" = "msr_precip_avg",
+      "Sunshine hours" = "msr_sundur_avg"
+    ) %>%
+      unname()
     msr_inputs_chosen <- c("dim_latitude", "dim_longitude", msr_inputs_chosen)
 
     # Implicit inclusion of cos and sin verion of `time_month` -----
@@ -281,50 +315,60 @@ server <- function(input, output, session) {
 
   dat_model_output_prime_react <- eventReactive(input$do, {
     dat_input <- dat_input_react()
-    knn <- as.numeric(input$knn)
+    # knn <- as.numeric(input$knn)
+    knn <- settings$number_of_recommendations
 
-    model_output <- model_run_prime_v1(
-      dat_input = dat_input,
-      dat_db = dat_db_msr,
-      dat_station = dat_station,
-      knn = knn
-    )
-
-    model_output
+    # future({
+      model_run_prime(
+        dat_input = dat_input,
+        dat_db = dat_db_msr,
+        dat_station = dat_station,
+        knn = knn
+      )$model_output
+    # }, globals = list(
+    #   settings = settings,
+    #   model_run_v7 = model_run_v7,
+    #   dat_db_msr = dat_db_msr,
+    #   dat_input = dat_input,
+    #   dat_station = dat_station,
+    #   knn = knn
+    # ))
   })
 
   dat_model_output_alts_react <- eventReactive(input$do, {
     dat_input <- dat_input_react()
-    knn <- as.numeric(input$knn)
+    # knn <- as.numeric(input$knn)
+    knn <- settings$number_of_recommendations
 
-    model_output <- model_run_v7(
-      dat_input = dat_input,
-      dat_db = dat_db_msr,
-      dat_station = dat_station,
-      knn = knn
-    )
-
-    model_output
+    # future({
+        model_run_v7(
+        dat_input = dat_input,
+        dat_db = dat_db_msr,
+        dat_station = dat_station,
+        knn = knn,
+        session = session
+      )$model_output
+    # }, globals = list(
+    #   settings = settings,
+    #   model_run_v7 = model_run_v7,
+    #   dat_db_msr = dat_db_msr,
+    #   dat_input = dat_input,
+    #   dat_station = dat_station,
+    #   knn = knn,
+    #   session = session
+    # ))
   })
 
   output$model_output_prime <- shiny::renderDataTable({
-    # mtcars
-    model_output <- dat_model_output_prime_react()$model_output %>%
+    dat_model_output_prime_react() %>%
       dat_transform_monthnumbers_to_monthnames() %>%
       dat_transform_relevant_columns_minimal() %>%
       dplyr::mutate(msr_distance = msr_distance %>% round(4)) %>%
       dat_transform_names_to_label()
-
-    # print(nrow(dat_model_output_prime_react()$model_output))
-
-    model_output
-
-    # row.names(model_output) <- as.character(1:nrow(model_output))
-    # model_output
-
   }, options = list(
     scrollX = TRUE,
-    scrollY = "400px",
+    scrollY = "100px",
+    paging = FALSE,
     lengthChange = FALSE,
     searching = FALSE,
     order = list(list(1, 'asc')))
@@ -333,14 +377,11 @@ server <- function(input, output, session) {
   # flexible and make code easier to maintain
 
   output$model_output_alts <- shiny::renderDataTable({
-    # mtcars
-    model_output <- dat_model_output_alts_react()$model_output %>%
+    dat_model_output_alts_react() %>%
       dat_transform_monthnumbers_to_monthnames() %>%
-      dat_transform_relevant_columns() %>%
+      dat_transform_relevant_columns(dev_mode = settings$dev_mode) %>%
       dplyr::mutate(msr_distance = msr_distance %>% round(4)) %>%
       dat_transform_names_to_label()
-
-    model_output
   }, options = list(
     scrollX = TRUE,
     scrollY = "400px",

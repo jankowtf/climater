@@ -1950,3 +1950,146 @@ model_handle_column_alignment <- function(dat_db, dat_input) {
     dat_db = dat_db
   )
 }
+
+model_estimate_prime_v1 <- function(
+  dat_input,
+  dat_db,
+  dat_station
+) {
+  .Deprecated("model_estimate_prime_v2")
+  dat_input <- dat_input %>%
+    dplyr::mutate(
+      id = "0"
+    ) %>%
+    dplyr::select(
+      id,
+      everything()
+    )
+
+  # Filter based on time input -----
+  dat_list <- model_handle_input_time_v2(
+    dat_input = dat_input,
+    dat_db = dat_db
+  )
+  dat_db <- dat_list$dat_db
+
+  df_estimate <- model_estimate_prime_inner_v1(
+    dat_input = dat_input,
+    dat_db = dat_db,
+    dat_station = dat_station
+  )
+
+  list(df_estimate)
+}
+
+model_estimate_prime_inner_v1 <- function(
+  dat_input,
+  dat_db,
+  dat_station
+) {
+  .Deprecated("model_estimate_prime_inner_v2")
+  # Compute geo distance -----
+  dat_msr_distance <- compute_geo_distance_v3(
+    p_1 = dat_input %>%
+      dplyr::select(matches("latitude|longitude")) %>%
+      dplyr::summarise_all(unique),
+    p_2 = dat_station
+  )
+
+  # Handle distance input -----
+  # Only keep stations that have distance <= user input
+  dat_list <- handle_input_distance_v2(
+    dat_input = dat_input,
+    dat_msr_distance = dat_msr_distance
+  )
+  # Update input and distance data:
+  dat_input <- dat_list$dat_input
+  dat_input_out <- dat_input
+  dat_msr_distance <- dat_list$dat_msr_distance
+
+  dat_time <- dat_db %>%
+    dplyr::select(
+      dim_station,
+      time_month
+    )
+
+  # Handle DB -----
+  dat_list <- model_handle_input_db_v3(
+    dat_db = dat_db,
+    dat_time = dat_time,
+    dat_msr_distance = dat_msr_distance
+  )
+  dat_db <- dat_list$dat_db
+  dat_db_out <- dat_list$dat_db_out
+
+  # Create geo distance data frame ----
+  dat_distance_geo <- model_prime_handle_dat_dist_geo_v1(dat_db)
+
+  # Early exit -----
+  if (!nrow(dat_db)) {
+    model_result <- list(
+      estimation_result= tibble::tibble(
+        dim_station = NA,
+        index = NA,
+        rank = NA,
+        estimation_result = NA
+      ),
+      dat_distance_geo = dat_distance_geo,
+      dat_input = dat_input_out,
+      dat_db = dat_db_out
+    )
+    return(model_result)
+  }
+
+  # Drop all dims -----
+  dat_list <- model_handle_column_alignment(dat_db, dat_input)
+  dat_input <- dat_list$dat_input
+  dat_db <- dat_list$dat_db
+
+  # Align dimensions of input -----
+  dat_input <- purrr::map_df(
+    seq_len(dat_db %>% nrow()), ~dat_input
+  )
+
+  # Compute euclidean distance -----
+  # purrr::map2(dat_db, dat_input, pmap_inner_2)
+  dat_input_mat <- dat_input %>%
+    as.matrix()
+  dat_db_mat <- dat_db %>%
+    as.matrix()
+  vec_estimation_result <- sapply(1:nrow(dat_db), function(row) {
+    dat_db_this <- dat_db_mat[row, , drop = FALSE]
+    dat_input_this <- dat_input_mat[row, , drop = FALSE]
+    res <- philentropy:::euclidean(
+      dat_input_this, dat_db_this, testNA = FALSE)
+  })
+
+  estimation_result <- tibble::tibble(
+    dim_station = dat_db_out$dim_station,
+    uid = dat_db_out$uid,
+    estimation_result = vec_estimation_result
+  ) %>%
+    # Add distances for arranging:
+    dplyr::left_join(dat_distance_geo,
+      by = "dim_station"
+    ) %>%
+    # Add position index:
+    dplyr::mutate(index = row_number()) %>%
+    dplyr::arrange(estimation_result, msr_distance) %>%
+    dplyr::mutate(rank = row_number()) %>%
+    dplyr::select(
+      dim_station,
+      uid,
+      index,
+      rank,
+      # msr_distance,
+      estimation_result
+    )
+
+  list(
+    estimation_result= estimation_result,
+    dat_distance_geo = dat_distance_geo,
+    dat_input = dat_input_out,
+    dat_db = dat_db_out
+  )
+}

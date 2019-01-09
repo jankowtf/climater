@@ -43,6 +43,12 @@ settings <- list(
       0
     )
   ),
+  # Number of recommendations to show for dream locations -----
+  number_of_recommendations = 1,
+  # Dev mode yes/no. If yes, additional tabs/infos are shown -----
+  dev_mode = FALSE,
+  # Present results in tabs yes/no -----
+  ui_mode_tabs = TRUE,
 
   ##############################################################################
   # Backend settings >> DO NOT CHANGE -----

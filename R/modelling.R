@@ -147,7 +147,7 @@ model_estimate_v2 <- function(
 }
 
 #' @export
-model_estimate_prime_v1 <- function(
+model_estimate_prime <- function(
   dat_input,
   dat_db,
   dat_station
@@ -168,7 +168,7 @@ model_estimate_prime_v1 <- function(
   )
   dat_db <- dat_list$dat_db
 
-  df_estimate <- model_estimate_prime_inner_v1(
+  df_estimate <- model_estimate_prime_inner(
     dat_input = dat_input,
     dat_db = dat_db,
     dat_station = dat_station
@@ -459,7 +459,7 @@ model_estimate_inner_v2 <- function(.x) {
 }
 
 #' @export
-model_estimate_prime_inner_v1 <- function(
+model_estimate_prime_inner <- function(
   dat_input,
   dat_db,
   dat_station
@@ -480,6 +480,9 @@ model_estimate_prime_inner_v1 <- function(
   )
   # Update input and distance data:
   dat_input <- dat_list$dat_input
+  # Remove distance input:
+  dat_input <- dat_input %>%
+    select(-matches("^msr_distance"))
   dat_input_out <- dat_input
   dat_msr_distance <- dat_list$dat_msr_distance
 
@@ -1590,7 +1593,7 @@ model_run_v3 <- function(
 }
 
 #' @export
-model_run_prime_v1 <- function(
+model_run_prime <- function(
   dat_input,
   dat_db,
   dat_station,
@@ -1604,7 +1607,7 @@ model_run_prime_v1 <- function(
   # TODO 20181206: put in own function and find best place to call it
 
   # Model estimation -----
-  model_estimation <- model_estimate_prime_v1(
+  model_estimation <- model_estimate_prime(
     dat_input = dat_input,
     dat_db = dat_db,
     dat_station = dat_station
@@ -1625,10 +1628,13 @@ model_run_v7 <- function(
   dat_input,
   dat_db,
   dat_station,
-  knn
+  knn,
+  session
 ) {
-  withProgress(message = 'Getting recommendations', value = 0, {
-    incProgress(1/3, detail = "Estimating...")
+  shiny::withProgress(message = 'Getting recommendations', value = 0,
+    session = session,
+    {
+    shiny::incProgress(1/3, detail = "Estimating...", session = session)
 
     # Add row UID -----
     dat_db <- dat_db %>%
@@ -1645,7 +1651,7 @@ model_run_v7 <- function(
     )
 
 
-    incProgress(2/3, detail = "Selecting...")
+    shiny::incProgress(2/3, detail = "Selecting...", session = session)
     # Model output -----
     model_output <- model_apply_v3(
       model_estimation,
@@ -1653,7 +1659,7 @@ model_run_v7 <- function(
       knn = knn
     )
 
-    incProgress(3/3, detail = "Done...")
+    shiny::incProgress(3/3, detail = "Done...", session = session)
 
     model_output
   })
