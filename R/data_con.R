@@ -17,7 +17,7 @@ data_con_get_path <- function(
     settings$data$cons[[id]][[dtype]]
   )
   if (dtype != "raw") {
-    path <- unlist(str_split(path, "\\."))
+    path <- unlist(stringr::str_split(path, "\\."))
     path <- sprintf("%s_%s.%s", path[1], vsn, path[2])
   }
   if (length(ftype)) path <- sprintf("%s.%s", path, ftype)

@@ -99,7 +99,7 @@ model_estimate_v2 <- function(
     # TODO-20180610: encapsulate in function
 
     # Drop all dims -----
-    idx <- colnames(dat_input_row) %>% str_detect("dim")
+    idx <- colnames(dat_input_row) %>% stringr::str_detect("dim")
     dat_input_row <- dat_input_row[ , !idx, drop = FALSE]
 
     ret <- lapply(1:nrow(dat_db), function(row) {
@@ -284,7 +284,7 @@ model_estimate_v8 <- function(
 
   dat_input <- dat_input %>%
     dplyr::mutate(
-      id = str_glue("time={fct_scaling_time}_dist={fct_scaling_dist}")
+      id = stringr::str_glue("time={fct_scaling_time}_dist={fct_scaling_dist}")
     ) %>%
     dplyr::select(
       id,
@@ -712,7 +712,7 @@ model_estimate_inner_v5 <- function(
     estimation_result = vec_estimation_result
   ) %>%
     # dplyr::mutate(
-    #   id_scaling = str_glue("time={fct_scaling_time}_dist={fct_scaling_dist}")
+    #   id_scaling = stringr::str_glue("time={fct_scaling_time}_dist={fct_scaling_dist}")
     # ) %>%
     # dplyr::select(
     #   id_scaling,
@@ -779,7 +779,7 @@ pipe_model_estimate_inner <- function(
 
   cols_db <- cols_input %>%
     as.character() %>%
-    str_replace("^input_", "") %>%
+    stringr::str_replace("^input_", "") %>%
     rlang::syms()
 
   dat_input <- dat_estimation %>%
@@ -1678,8 +1678,8 @@ handle_input_distance_v2 <- function(
   # TODO 20181129: refactor column names from settings
 
   idx <- colnames(dat_input) %>%
-    str_detect(quo_name(col_msr_distance) %>%
-        str_glue("$"))
+    stringr::str_detect(quo_name(col_msr_distance) %>%
+        stringr::str_glue("$"))
   if (any(idx)) {
     value_msr_distance <- dat_input %>%
       dplyr::distinct(!!col_msr_distance) %>%
@@ -1707,7 +1707,7 @@ model_handle_input_time_v2 <- function(
   dat_db
 ) {
   col_dim_time <- settings$name_mapping$time_month$key
-  idx <- colnames(dat_input) %>% str_detect(quo_name(col_dim_time))
+  idx <- colnames(dat_input) %>% stringr::str_detect(quo_name(col_dim_time))
   if (any(idx)) {
     value_dim_time <- dat_input %>% dplyr::pull(!!col_dim_time)
     dat_db <- dat_db %>% dplyr::filter(
@@ -1862,16 +1862,16 @@ model_handle_column_alignment_v2 <- function(dat_db, dat_input) {
   # TODO-20180610: encapsulate in function
 
   cols <- intersect(names(dat_db), names(dat_input))
-  idx <- cols %>% str_detect("_scaled$")
+  idx <- cols %>% stringr::str_detect("_scaled$")
   if (any(idx)) {
     cols_scaled <- cols[idx]
     cols_unscaled <- cols_scaled %>%
-      sapply(function(x) x %>% str_replace("_scaled$", ""))
+      sapply(function(x) x %>% stringr::str_replace("_scaled$", ""))
     cols <- cols[!cols %in% cols_unscaled]
   }
 
   # Ensure `time_month` is dropped in favor of sin and cos version -----
-  if (any(idx <- str_detect(cols, "time_month_scaled$"))) {
+  if (any(idx <- stringr::str_detect(cols, "time_month_scaled$"))) {
     cols <- cols[!idx]
   }
 

@@ -49,6 +49,8 @@ settings <- list(
   dev_mode = FALSE,
   # Present results in tabs yes/no -----
   ui_mode_tabs = TRUE,
+  # Use map(s) yes/no -----
+  ui_mode_map = TRUE,
 
   ##############################################################################
   # Backend settings >> DO NOT CHANGE -----
@@ -310,6 +312,9 @@ settings <- list(
         label_1 = "ID"
       )
     )
+  ),
+  api_keys = list(
+    google_maps = "AIzaSyB4GFcTvkAc9IsVLaWzS27vIsLtqu-1MxE"
   )
 )
 

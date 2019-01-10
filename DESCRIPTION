@@ -19,4 +19,6 @@ Imports:
     magrittr,
     tibble,
     purrr,
-    purrrlyr
+    purrrlyr,
+    DT,
+    here

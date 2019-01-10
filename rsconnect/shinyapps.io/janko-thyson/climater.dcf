@@ -5,9 +5,8 @@ account: janko-thyson
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 585041
-bundleId: 1715205
+bundleId: 1805293
 url: https://janko-thyson.shinyapps.io/climater/
-when: 1542902777.60844
+when: 1547057636.46483
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: .gitattributes|.Rbuildignore|.travis.yml|climater_deploy_key|climater_deploy_key.pub|codecov.yml|DESCRIPTION|LICENSE|LICENSE.md|NAMESPACE|NEWS.md|README.md|man/hello.Rd|revdep/.gitignore|revdep/email.yml|inst|R|tests

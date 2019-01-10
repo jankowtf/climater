@@ -7,28 +7,46 @@
 #    http://shiny.rstudio.com/
 #
 
-options(scipen = 10)
+# Package dependencies ----------------------------------------------------
+
+library(magrittr)
 library(shiny)
-# options(shiny.suppressMissingContextError = TRUE)
-# options(shiny.trace = TRUE)
-# options(shiny.fullstacktrace = TRUE)
-# options(shiny.error = recover)
 library(DT)
+library(here)
+
 # library(promises)
 # library(future)
+library(googleway)
+
+# Core package:
 if (basename(here::here()) == "climater") {
   devtools::load_all(here::here())
 } else {
   library(climater)
 }
+
+# Options and settings ----------------------------------------------------
+
+options(scipen = 10)
+# options(shiny.suppressMissingContextError = TRUE)
+# options(shiny.trace = TRUE)
+# options(shiny.fullstacktrace = TRUE)
+# options(shiny.error = recover)
+
 settings <- default_settings()
 settings$output$show <- FALSE
 set_global_data_repo("repo_1", settings = settings)
 # set_global_data_repo("repo_2", settings = settings)
+map_key <- settings$api_keys$google_maps
+
+# Initialization aspects --------------------------------------------------
+
 dat_db_0 <- data_read_db(vsn = "v3")
 source("app_load_data.R")
 
-# plan(multiprocess)
+if ("future" %in% loadedNamespaces()) {
+  plan(multiprocess)
+}
 
 # UI ----------------------------------------------------------------------
 
@@ -36,91 +54,104 @@ ui <- fluidPage(
   # Title -----
   titlePanel("Your climate"),
 
-  inputPanel(
-    radioButtons("use_geo_auto", label = "Automatically detect location",
-      choices = c("yes", "no"), selected = "no", inline = TRUE),
+  if (settings$ui_mode_map) {
+    # inputPanel(
+    div(
+      h4("Choose your location"),
+      googleway::google_mapOutput(outputId = "map", height = "220px")
+    )
+    # )
+  } else {
+    inputPanel(
+      radioButtons("use_geo_auto", label = "Automatically detect location",
+        choices = c("yes", "no"), selected = "no", inline = TRUE),
 
-    numericInput("geo_lat", label = "Your latitude (decimal sep: .)",
-      value = 0, min = -90, max = 90),
+      numericInput("geo_lat", label = "Your latitude (decimal sep: .)",
+        value = 0, min = -90, max = 90),
 
-    numericInput("geo_long", label = "Your longtiude (decimal sep: .)",
-      value = 0, min = -180, max = 180)
-  ),
+      numericInput("geo_long", label = "Your longtiude (decimal sep: .)",
+        value = 0, min = -180, max = 180)
+    )
+  },
 
-  inputPanel(
-    selectInput("time_month", label = "Month of year",
-      # choices = 1:12, selected = 7, multiple = FALSE),
-      choices = list(
-        "January" = 1,
-        "Feburary" = 2,
-        "March" = 3,
-        "April" = 4,
-        "May" = 5,
-        "June" = 6,
-        "July" = 7,
-        "August" = 8,
-        "September" = 9,
-        "October" = 10,
-        "November" = 11,
-        "December" = 12
-      ), selected = 7, multiple = FALSE),
+  div(
+    h4("Choose your desired climate settings"),
+    inputPanel(
 
-    sliderInput("msr_distance", label = "Max. distance to destination",
-      min = 0,
-      max = 10000,
-      value = 5000,
-      step = 1,
-      ticks = FALSE),
+      selectInput("time_month", label = "Month of year",
+        # choices = 1:12, selected = 7, multiple = FALSE),
+        choices = list(
+          "January" = 1,
+          "Feburary" = 2,
+          "March" = 3,
+          "April" = 4,
+          "May" = 5,
+          "June" = 6,
+          "July" = 7,
+          "August" = 8,
+          "September" = 9,
+          "October" = 10,
+          "November" = 11,
+          "December" = 12
+        ), selected = 7, multiple = FALSE),
 
-    sliderInput("msr_temp_min", label = "Min. temperature",
-      min = min(dat_db_0$msr_temp_min, na.rm = TRUE) %>% floor(),
-      max = max(dat_db_0$msr_temp_min, na.rm = TRUE) %>% ceiling(),
-      value = mean(dat_db_0$msr_temp_min, na.rm = TRUE),
-      step = 0.5,
-      ticks = FALSE),
+      sliderInput("msr_distance", label = "Max. distance to destination",
+        min = 0,
+        max = 10000,
+        value = 5000,
+        step = 1,
+        ticks = FALSE),
 
-    sliderInput("msr_temp_max", label = "Max. temperature",
-      min = min(dat_db_0$msr_temp_max, na.rm = TRUE) %>% floor(),
-      max = max(dat_db_0$msr_temp_max, na.rm = TRUE) %>% ceiling(),
-      value = mean(dat_db_0$msr_temp_min, na.rm = TRUE),
-      step = 0.5,
-      ticks = FALSE),
+      sliderInput("msr_temp_min", label = "Min. temperature",
+        min = min(dat_db_0$msr_temp_min, na.rm = TRUE) %>% floor(),
+        max = max(dat_db_0$msr_temp_min, na.rm = TRUE) %>% ceiling(),
+        value = mean(dat_db_0$msr_temp_min, na.rm = TRUE),
+        step = 0.5,
+        ticks = FALSE),
 
-    # sliderInput("msr_temp_avg", label = "Avg. temperature",
-    #   min = min(dat_db_0$msr_temp_avg, na.rm = TRUE) %>% floor(),
-    #   max = max(dat_db_0$msr_temp_avg, na.rm = TRUE) %>% ceiling(),
-    #   value = mean(dat_db_0$msr_temp_avg, na.rm = TRUE),
-    #   step = 0.5,
-    #   ticks = FALSE),
+      sliderInput("msr_temp_max", label = "Max. temperature",
+        min = min(dat_db_0$msr_temp_max, na.rm = TRUE) %>% floor(),
+        max = max(dat_db_0$msr_temp_max, na.rm = TRUE) %>% ceiling(),
+        value = mean(dat_db_0$msr_temp_min, na.rm = TRUE),
+        step = 0.5,
+        ticks = FALSE),
 
-    # sliderInput("msr_precip_min", label = "Min. precipitation",
-    #   min = min(dat_db_0$msr_precip_min, na.rm = TRUE) %>% floor(),
-    #   max = max(dat_db_0$msr_precip_min, na.rm = TRUE) %>% ceiling(),
-    #   value = mean(dat_db_0$msr_precip_min, na.rm = TRUE),
-    #   step = 0.5,
-    #   ticks = FALSE),
-    #
-    # sliderInput("msr_precip_max", label = "Max. precipitation",
-    #   min = min(dat_db_0$msr_precip_max, na.rm = TRUE) %>% floor(),
-    #   max = max(dat_db_0$msr_precip_max, na.rm = TRUE) %>% ceiling(),
-    #   # value = mean(dat_db_0$msr_precip_min, na.rm = TRUE),
-    #   value = 10,
-    #   step = 0.5,
-    #   ticks = FALSE),
+      # sliderInput("msr_temp_avg", label = "Avg. temperature",
+      #   min = min(dat_db_0$msr_temp_avg, na.rm = TRUE) %>% floor(),
+      #   max = max(dat_db_0$msr_temp_avg, na.rm = TRUE) %>% ceiling(),
+      #   value = mean(dat_db_0$msr_temp_avg, na.rm = TRUE),
+      #   step = 0.5,
+      #   ticks = FALSE),
 
-    sliderInput("msr_precip_avg", label = "Rain days per month",
-      min = min(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% floor(),
-      max = max(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% ceiling(),
-      value = 10,
-      step = 1,
-      ticks = FALSE),
+      # sliderInput("msr_precip_min", label = "Min. precipitation",
+      #   min = min(dat_db_0$msr_precip_min, na.rm = TRUE) %>% floor(),
+      #   max = max(dat_db_0$msr_precip_min, na.rm = TRUE) %>% ceiling(),
+      #   value = mean(dat_db_0$msr_precip_min, na.rm = TRUE),
+      #   step = 0.5,
+      #   ticks = FALSE),
+      #
+      # sliderInput("msr_precip_max", label = "Max. precipitation",
+      #   min = min(dat_db_0$msr_precip_max, na.rm = TRUE) %>% floor(),
+      #   max = max(dat_db_0$msr_precip_max, na.rm = TRUE) %>% ceiling(),
+      #   # value = mean(dat_db_0$msr_precip_min, na.rm = TRUE),
+      #   value = 10,
+      #   step = 0.5,
+      #   ticks = FALSE),
 
-    sliderInput("msr_sundur_avg", label = "Sunshine hours per day",
-      min = min(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% floor(),
-      max = max(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% ceiling(),
-      value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE),
-      step = 1,
-      ticks = FALSE)
+      sliderInput("msr_precip_avg", label = "Rain days per month",
+        min = min(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% floor(),
+        max = max(dat_db_0$msr_precip_avg, na.rm = TRUE) %>% ceiling(),
+        value = 10,
+        step = 1,
+        ticks = FALSE),
+
+      sliderInput("msr_sundur_avg", label = "Sunshine hours per day",
+        min = min(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% floor(),
+        max = max(dat_db_0$msr_sundur_avg, na.rm = TRUE) %>% ceiling(),
+        value = mean(dat_db_0$msr_sundur_avg, na.rm = TRUE),
+        step = 1,
+        ticks = FALSE)
+    )
   ),
 
   inputPanel(
@@ -161,75 +192,110 @@ ui <- fluidPage(
     # selectInput("knn", label = "Number of recommendations",
     #   choices = 1:50, selected = 3),
 
-    actionButton("do", "Submit", icon = icon("refresh")),
+    actionButton("do", "Submit", icon = icon("refresh"))
 
     # JS for automatic detection of geo location
     # Source: https://github.com/AugustT/shiny_geolocation
-    tags$script('
-      $(document).ready(function () {
-        navigator.geolocation.getCurrentPosition(onSuccess, onError);
-
-        function onError (err) {
-          Shiny.onInputChange("geolocation", false);
-        }
-
-        function onSuccess (position) {
-          setTimeout(function () {
-            var coords = position.coords;
-            console.log(coords.latitude + ", " + coords.longitude);
-            Shiny.onInputChange("geolocation", true);
-            Shiny.onInputChange("geo_lat_auto", coords.latitude);
-            Shiny.onInputChange("geo_long_auto", coords.longitude);
-          }, 1100)
-        }
-      });
-              ')
+    # tags$script('
+    #   $(document).ready(function () {
+    #     navigator.geolocation.getCurrentPosition(onSuccess, onError);
+    #
+    #     function onError (err) {
+    #       Shiny.onInputChange("geolocation", false);
+    #     }
+    #
+    #     function onSuccess (position) {
+    #       setTimeout(function () {
+    #         var coords = position.coords;
+    #         console.log(coords.latitude + ", " + coords.longitude);
+    #         Shiny.onInputChange("geolocation", true);
+    #         Shiny.onInputChange("geo_lat_auto", coords.latitude);
+    #         Shiny.onInputChange("geo_long_auto", coords.longitude);
+    #       }, 1100)
+    #     }
+    #   });
+    # ')
   ),
 
-  if (!settings$dev_mode) {
-    if (settings$ui_mode_tabs) {
+  div(
+    h3("Results"),
+    if (!settings$dev_mode) {
+      if (settings$ui_mode_tabs) {
+        mainPanel(
+          tabsetPanel(type = "tabs",
+            tabPanel("Dream location",
+              h3("Your dream location"),
+              shiny::dataTableOutput("model_output_prime")
+            ),
+            tabPanel("Alternatives",
+              h3("Alternative suggestions"),
+              shiny::dataTableOutput("model_output_alts")
+            )
+          ),
+          width = 12
+        )
+      } else {
+        mainPanel(
+          h3("Your dream location"),
+          shiny::dataTableOutput("model_output_prime"),
+          h3("Alternative suggestions"),
+          shiny::dataTableOutput("model_output_alts"),
+          width = 12
+        )
+      }
+    } else {
       mainPanel(
         tabsetPanel(type = "tabs",
-          tabPanel("Dream location",
-            h3("Your dream location"),
-            shiny::dataTableOutput("model_output_prime")
-          ),
-          tabPanel("Alternatives",
-            h3("Alternative suggestions"),
-            shiny::dataTableOutput("model_output_alts")
-          )
+          tabPanel("Map", googleway::google_mapOutput(outputId = "map_model_ouput_prime")),
+          tabPanel("Dream location", shiny::dataTableOutput("model_output_prime")),
+          tabPanel("Alternatives", shiny::dataTableOutput("model_output_alts")),
+          tabPanel("Inputs", shiny::dataTableOutput("model_input")),
+          # tabPanel("Geo lat auto", shiny::textOutput("geo_lat_auto")),
+          # tabPanel("Geo long auto", shiny::textOutput("geo_long_auto")),
+          # tabPanel("Geo lat", shiny::textOutput("geo_lat")),
+          # tabPanel("Geo long", shiny::textOutput("geo_long")),
+          tabPanel("Geo location", shiny::tableOutput("geo_loc")),
+          tabPanel("Distances", shiny::tableOutput("dat_distances"))
         ),
         width = 12
       )
-    } else {
-      mainPanel(
-        h3("Your dream location"),
-        shiny::dataTableOutput("model_output_prime"),
-        h3("Alternative suggestions"),
-        shiny::dataTableOutput("model_output_alts"),
-        width = 12
-      )
     }
-  } else {
-    mainPanel(
-      tabsetPanel(type = "tabs",
-        tabPanel("Dream location", shiny::dataTableOutput("model_output_prime")),
-        tabPanel("Alternatives", shiny::dataTableOutput("model_output_alts")),
-        tabPanel("Inputs", shiny::dataTableOutput("model_input")),
-        tabPanel("Geo lat auto", shiny::textOutput("geo_lat_auto")),
-        tabPanel("Geo long auto", shiny::textOutput("geo_long_auto")),
-        tabPanel("Geo lat", shiny::textOutput("geo_lat")),
-        tabPanel("Geo long", shiny::textOutput("geo_long")),
-        tabPanel("Distances", shiny::textOutput("dat_distances"))
-      ),
-      width = 12
-    )
-  }
+  )
 )
 
 # Server ------------------------------------------------------------------
 
 server <- function(input, output, session) {
+  # Geolocation -----
+  gm_google_map_react <- reactive({
+    input$map_place_search
+    gm_value <- google_map(key = map_key, search_box = TRUE,
+      # event_return_type = 'json')
+      event_return_type = 'list')
+    gm_value
+  })
+
+  output$map <- renderGoogle_map({
+    # gm_value <- google_map(key = map_key, search_box = TRUE,
+    #   # event_return_type = 'json')
+    #   event_return_type = 'list')
+    # print(gm_value)
+    # gm_value
+    gm_google_map_react()
+  })
+
+  gm_geoloc_react <- eventReactive(input$map_place_search, {
+    event <- input$map_place_search
+    list(
+      lat = event$lat,
+      lon = event$lon
+    )
+  })
+  observeEvent(input$map_place_search, {
+    # event <- input$map_place_search
+    gm_geoloc_react()
+  })
+
   # Time transformation into cyclical variable(s) -----
   dat_db_msr <- dat_db_msr %>%
     dplyr::mutate(
@@ -237,16 +303,36 @@ server <- function(input, output, session) {
       time_month_cos = cos(2 * pi * time_month / 12)
     )
 
+  # dat_distance_react <- reactive({
+  #   dat_geo <- tibble::tibble(
+  #     dim_latitude = ifelse(is.null(v <- input$geo_lat_auto), 1, v),
+  #     dim_longitude = ifelse(is.null(v <- input$geo_long_auto), 1, v)
+  #   )
+  #   compute_geo_distance_v3(p_1 = dat_geo, p_2 = dat_station)
+  # })
+
+  # observe({
+  #   input$geo_lat_auto
+  #   updateSliderInput(session, "msr_distance",
+  #     value = round(mean(dat_distance_react()  %>%
+  #         dplyr::pull(msr_distance) %>% round(), na.rm = TRUE)),
+  #     min = min(dat_distance_react()  %>%
+  #         dplyr::pull(msr_distance) %>% round(), na.rm = TRUE),
+  #     max = max(dat_distance_react()  %>%
+  #         dplyr::pull(msr_distance) %>% round(), na.rm = TRUE),
+  #     step = 1
+  #   )
+  # })
+
   dat_distance_react <- reactive({
     dat_geo <- tibble::tibble(
-      dim_latitude = ifelse(is.null(v <- input$geo_lat_auto), 1, v),
-      dim_longitude = ifelse(is.null(v <- input$geo_long_auto), 1, v)
+      dim_latitude = ifelse(is.null(v <- gm_geoloc_react()$lat), 1, v),
+      dim_longitude = ifelse(is.null(v <- gm_geoloc_react()$lon), 1, v)
     )
     compute_geo_distance_v3(p_1 = dat_geo, p_2 = dat_station)
   })
 
-  observe({
-    input$geo_lat_auto
+  observeEvent(input$map_place_search, {
     updateSliderInput(session, "msr_distance",
       value = round(mean(dat_distance_react()  %>%
           dplyr::pull(msr_distance) %>% round(), na.rm = TRUE)),
@@ -260,14 +346,18 @@ server <- function(input, output, session) {
 
   dat_input_react <- reactive({
     dat <- tibble::tibble(
-      dim_latitude = ifelse(input$use_geo_auto == "yes",
-        ifelse(is.null(v <- input$geo_lat_auto), 0, as.numeric(v)),
-        ifelse(is.null(v <- input$geo_lat), 0, as.numeric(v))
-      ),
-      dim_longitude = ifelse(input$use_geo_auto == "yes",
-        ifelse(is.null(v <- input$geo_long_auto), 0, as.numeric(v)),
-        ifelse(is.null(v <- input$geo_long), 0, as.numeric(v))
-      ),
+      # dim_latitude = ifelse(input$use_geo_auto == "yes",
+      #   ifelse(is.null(v <- input$geo_lat_auto), 0, as.numeric(v)),
+      #   ifelse(is.null(v <- input$geo_lat), 0, as.numeric(v))
+      # ),
+      dim_latitude = ifelse(is.null(v <- gm_geoloc_react()$lat), 0, as.numeric(v)),
+
+      # dim_longitude = ifelse(input$use_geo_auto == "yes",
+      #   ifelse(is.null(v <- input$geo_long_auto), 0, as.numeric(v)),
+      #   ifelse(is.null(v <- input$geo_long), 0, as.numeric(v))
+      # ),
+      dim_longitude = ifelse(is.null(v <- gm_geoloc_react()$lon), 0, as.numeric(v)),
+
       time_month = as.numeric(input$time_month),
       msr_temp_min = as.numeric(input$msr_temp_min),
       msr_temp_max = as.numeric(input$msr_temp_max),
@@ -303,7 +393,7 @@ server <- function(input, output, session) {
     msr_inputs_chosen <- c("dim_latitude", "dim_longitude", msr_inputs_chosen)
 
     # Implicit inclusion of cos and sin verion of `time_month` -----
-    if (any(str_detect(msr_inputs_chosen, "time"))) {
+    if (any(stringr::str_detect(msr_inputs_chosen, "time"))) {
       msr_inputs_chosen <- c(msr_inputs_chosen, "time_month_sin", "time_month_cos")
     }
 
@@ -319,12 +409,12 @@ server <- function(input, output, session) {
     knn <- settings$number_of_recommendations
 
     # future({
-      model_run_prime(
-        dat_input = dat_input,
-        dat_db = dat_db_msr,
-        dat_station = dat_station,
-        knn = knn
-      )$model_output
+    model_run_prime(
+      dat_input = dat_input,
+      dat_db = dat_db_msr,
+      dat_station = dat_station,
+      knn = knn
+    )$model_output
     # }, globals = list(
     #   settings = settings,
     #   model_run_v7 = model_run_v7,
@@ -341,13 +431,13 @@ server <- function(input, output, session) {
     knn <- settings$number_of_recommendations
 
     # future({
-        model_run_v7(
-        dat_input = dat_input,
-        dat_db = dat_db_msr,
-        dat_station = dat_station,
-        knn = knn,
-        session = session
-      )$model_output
+    model_run_v7(
+      dat_input = dat_input,
+      dat_db = dat_db_msr,
+      dat_station = dat_station,
+      knn = knn,
+      session = session
+    )$model_output
     # }, globals = list(
     #   settings = settings,
     #   model_run_v7 = model_run_v7,
@@ -398,27 +488,33 @@ server <- function(input, output, session) {
       dat_transform_names_to_label()
   }, options = list(scrollX = TRUE))
 
-  output$geo_lat_auto <- shiny::renderPrint({
-    input$geo_lat_auto
+  # output$geo_lat_auto <- shiny::renderPrint({
+  #   input$geo_lat_auto
+  # })
+  #
+  # output$geo_long_auto <- shiny::renderPrint({
+  #   input$geo_long_auto
+  # })
+  #
+  # output$geo_lat <- shiny::renderPrint({
+  #   input$geo_lat
+  # })
+  #
+  # output$geo_long <- shiny::renderPrint({
+  #   input$geolocation
+  # })
+  output$geo_loc <- shiny::renderTable({
+    dat_input_react() %>%
+      dplyr::select(dim_latitude, dim_longitude)
   })
 
-  output$geo_long_auto <- shiny::renderPrint({
-    input$geo_long_auto
-  })
 
-  output$geo_lat <- shiny::renderPrint({
-    input$geo_lat
-  })
-
-  output$geo_long <- shiny::renderPrint({
-    input$geolocation
-  })
-
-  output$dat_distances <- shiny::renderPrint({
-    dat_distance_react()  %>%
-      dplyr::pull(msr_distance) %>%
-      round() %>%
-      summary()
+  output$dat_distances <- shiny::renderTable({
+    dat_distance_react()  #%>%
+    # dplyr::pull(msr_distance) %>%
+    # round() %>%
+    # summary()
+    # dplyr::select(dim_station, msr_distance)
   })
 
 }
