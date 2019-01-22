@@ -2,60 +2,6 @@
 # Distance measures -------------------------------------------------------
 
 #' @export
-model_estimate <- function(
-  dat_input,
-  dat_db,
-  dist_measures = default_dist_measures()
-) {
-  # Argument handling -----
-  dist_measures <- match.arg(dist_measures, several.ok = TRUE)
-
-  # Ensure matrix -----
-  dat_input <- as.matrix(dat_input)
-  dat_db <- as.matrix(dat_db)
-
-  # Compute distance for each input row/vector -----
-  dat_dist <- lapply(1:nrow(dat_input), function(row_user) {
-    dat_input_row <- dat_input[row_user, , drop = FALSE]
-
-    lapply(1:nrow(dat_db), function(row) {
-      dat_db_this <- dat_db[row, colnames(dat_input_row), drop = FALSE]
-
-      # List availble distance measures
-      # philentropy::getDistMethods()
-
-      res <- list(
-        euclidean = if ("euclidean" %in% dist_measures) {
-          philentropy:::euclidean(
-            dat_input_row, dat_db_this, testNA = FALSE)
-        },
-        manhattan = if ("manhattan" %in% dist_measures) {
-          philentropy:::manhattan(
-            dat_input_row, dat_db_this, testNA = FALSE)
-        },
-        jaccard = if ("jaccard" %in% dist_measures) {
-          philentropy:::jaccard(
-            dat_input_row, dat_db_this, testNA = FALSE)
-        },
-        avg = if ("avg" %in% dist_measures) {
-          philentropy:::avg(
-            dat_input_row, dat_db_this, testNA = FALSE)
-        },
-        squared_euclidean = if ("squared_euclidean" %in% dist_measures) {
-          philentropy:::squared_euclidean(
-            dat_input_row, dat_db_this, testNA = FALSE)
-        },
-        chebyshev = if ("chebyshev" %in% dist_measures) {
-          philentropy:::chebyshev(
-            dat_input_row, dat_db_this, testNA = FALSE)
-        }
-      )
-      res[!sapply(res, is.null)]
-    })
-  })
-}
-
-#' @export
 model_estimate_v2 <- function(
   dat_input,
   dat_db,
@@ -162,7 +108,7 @@ model_estimate_prime <- function(
     )
 
   # Filter based on time input -----
-  dat_list <- model_handle_input_time_v2(
+  dat_list <- model_handle_input_time(
     dat_input = dat_input,
     dat_db = dat_db
   )
@@ -178,10 +124,11 @@ model_estimate_prime <- function(
 }
 
 #' @export
-model_estimate_v8 <- function(
+model_estimate <- function(
   dat_input,
   dat_db,
-  dat_station
+  dat_station,
+  expand_weight_grid
 ) {
   # Get scaling factor(s) from settings -----
   if (TRUE) {
@@ -200,8 +147,12 @@ model_estimate_v8 <- function(
       rep(nrow(dat_input))
     v_fct_scaling_time <- unlist(settings$scaling$time) %>%
       rep(nrow(dat_input))
-    dat_fct_scaling <- expand.grid(v_fct_scaling_dist, v_fct_scaling_time) %>%
-      tibble::as_tibble()
+    if (expand_weight_grid) {
+      dat_fct_scaling <- expand.grid(v_fct_scaling_dist, v_fct_scaling_time) %>%
+        tibble::as_tibble()
+    } else {
+      dat_fct_scaling <- tibble::tibble(v_fct_scaling_dist, v_fct_scaling_time)
+    }
     names(dat_fct_scaling) <- c("fct_scaling_dist", "fct_scaling_time")
     dat_fct_scaling <- dat_fct_scaling %>%
       dplyr::arrange(fct_scaling_dist, fct_scaling_time)
@@ -682,7 +633,7 @@ model_estimate_inner_v5 <- function(
     dplyr::pull()
 
   # Drop all dims -----
-  dat_list <- model_handle_column_alignment_v2(dat_db, dat_input)
+  dat_list <- model_handle_column_alignment(dat_db, dat_input)
   dat_input <- dat_list$dat_input
   dat_db <- dat_list$dat_db
 
@@ -975,166 +926,7 @@ model_predict_v3 <- function(
 }
 
 #' @export
-model_apply_v1 <- function(
-  model_estimation,
-  dat_station,
-  knn
-) {
-  # dat_result <- lapply(model_estimation, function(estimation) {
-  model_output_list <- model_estimation %>%
-    purrr::map(function(estimation) {
-      # Ensure matrix -----
-      dat_db <- estimation$dat_db
-
-      choice <- estimation$estimation_result %>%
-        dplyr::group_by(fct_scaling) %>%
-        dplyr::filter(rank %in% 1:knn)
-
-      dat_input <- estimation$dat_input
-      fct_scaling <- choice %>%
-        dplyr::ungroup() %>%
-        # dplyr::pull(fct_scaling) %>%
-        dplyr::distinct(fct_scaling) %>%
-        dplyr::pull()
-      factor_align_input <- fct_scaling %>%
-        dplyr::n_distinct()
-      dat_input <- purrr::map_df(seq_len(factor_align_input * knn), ~dat_input) %>%
-        dplyr::mutate(
-          fct_scaling = rep(fct_scaling, knn) %>% sort()
-        ) %>%
-        dplyr::group_by(fct_scaling) %>%
-        as.matrix()
-
-      # Prediction data -----
-      foo <- function(choice, dat_db) {
-        dat_db %>%
-          dplyr::filter(
-            dim_station %in% choice$dim_station
-          )
-      }
-      dat_output <- choice %>%
-        dplyr::do(foo(., dat_db)) %>%
-        dplyr::ungroup() %>%
-        select(dim_station, time_month, matches("msr_")) %>%
-        mutate(
-          # diff_time_month = time_month - dat_input %>%
-          #   dplyr::pull(time_month),
-          # diff_msr_temp_min = msr_temp_min - dat_input %>%
-          #   dplyr::pull(msr_temp_min),
-          # diff_msr_temp_max = msr_temp_max - dat_input %>%
-          #   dplyr::pull(msr_temp_max),
-          # diff_msr_temp_avg = msr_temp_avg - dat_input %>%
-          #   dplyr::pull(msr_temp_avg),
-          # diff_msr_precip_min = msr_precip_min - dat_input %>%
-          #   dplyr::pull(msr_precip_min),
-          # diff_msr_precip_max = msr_precip_max - dat_input %>%
-          #   dplyr::pull(msr_precip_max),
-          # diff_msr_precip_avg = msr_precip_avg - dat_input %>%
-          #   dplyr::pull(msr_precip_avg),
-          # diff_msr_sundur_avg = msr_sundur_avg - dat_input %>%
-          #   dplyr::pull(msr_sundur_avg)
-          diff_time_month = time_month - dat_input["time_month"],
-          diff_msr_temp_min = msr_temp_min - dat_input["msr_temp_min"],
-          diff_msr_temp_max = msr_temp_max - dat_input["msr_temp_max"],
-          diff_msr_temp_avg = msr_temp_avg - dat_input["msr_temp_avg"],
-          diff_msr_precip_min = msr_precip_min - dat_input["msr_precip_min"],
-          diff_msr_precip_max = msr_precip_max - dat_input["msr_precip_max"],
-          diff_msr_precip_avg = msr_precip_avg - dat_input["msr_precip_avg"],
-          diff_msr_sundur_avg = msr_sundur_avg - dat_input["msr_sundur_avg"]
-        ) %>%
-        dplyr::mutate(
-          fct_scaling = rep(fct_scaling, knn) %>% sort()
-        ) %>%
-        dplyr::select(
-          fct_scaling,
-          everything()
-        )
-
-      # dat_output <- dat_output %>% mutate_if(is.double, round, 1)
-      dat_output <- dat_output %>% mutate_at(vars(matches("^diff")), round, 1)
-
-      dat_output <- bind_cols(
-        choice %>%
-          dplyr::ungroup() %>%
-          dplyr::select(dim_rank = rank),
-        dat_output
-      ) %>%
-        dplyr::select(
-          fct_scaling,
-          dim_rank,
-          everything()
-        )
-      # dat_output %>% dplyr::left_join(
-      #   choice,
-      #   by = c("fct_scaling", "dim_station")
-      # ) %>%
-      #   dplyr::select(
-      #     fct_scaling,
-      #     dim_station,
-      #     rank,
-      #     everything()
-      #   ) %>%
-      #   dplyr::group_by(fct_scaling) %>%
-      #   dplyr::arrange(fct_scaling, rank) %>%
-      #   dplyr::ungroup()
-
-      dat_distance_geo <- estimation$dat_distance_geo
-
-      # Join stations -----
-      dat_output_2 <- inner_join(
-        dat_output,
-        dat_station,
-        by = "dim_station"
-      ) %>%
-        left_join(
-          dat_distance_geo,
-          by = c("fct_scaling", "dim_station")
-        ) %>%
-        select(
-          fct_scaling,
-          dim_rank,
-          dim_country,
-          dim_station_name,
-          msr_distance,
-          time_month,
-          diff_time_month,
-          msr_temp_min,
-          diff_msr_temp_min,
-          msr_temp_max,
-          diff_msr_temp_max,
-          msr_temp_avg,
-          diff_msr_temp_avg,
-          msr_precip_min,
-          diff_msr_precip_min,
-          msr_precip_max,
-          diff_msr_precip_max,
-          msr_precip_avg,
-          diff_msr_precip_avg,
-          msr_sundur_avg,
-          diff_msr_sundur_avg,
-          dim_station,
-          dim_latitude,
-          dim_longitude,
-          dim_high,
-          everything()
-        )
-
-      # Return -----
-      list(
-        model_input = dat_input %>% tibble::as_tibble(),
-        model_output = dat_output_2
-      )
-    })
-  # names(model_output_list) <- paste0("input_", 1:length(model_output_list))
-
-  model_output <- list(
-    model_input = purrr::map_df(model_output_list, "model_input"),
-    model_output = purrr::map_df(model_output_list, "model_output")
-  )
-}
-
-#' @export
-model_apply_v3 <- function(
+model_apply <- function(
   model_estimation,
   dat_station,
   knn
@@ -1501,74 +1293,6 @@ shiny_run_model <- function(
 }
 
 #' @export
-model_run <- function(
-  dat_input,
-  dat_db,
-  dat_station,
-  dist_measures,
-  dist_measure_final,
-  knn
-) {
-  # Model estimation --------------------------------------------------------
-
-  model_estimation <- model_estimate_v3(
-    dat_input = dat_input,
-    dat_db = dat_db_msr,
-    dat_station = dat_station,
-    dist_measures = dist_measures
-  )
-  # model_estimation[[1]][[1]]
-
-  # NOTE:
-  # * First level: data input vectors
-  # * Second level: station
-  # * Third level: distance measure values
-
-  # Identify best choices ---------------------------------------------------
-
-  model_prediction_index <- model_predict_index_v3(
-    model_estimation = model_estimation,
-    knn = knn
-  )
-  # model_prediction_index
-
-  # Model prediction --------------------------------------------------------
-
-  model_prediction <- model_predict_v3(
-    model_prediction_index,
-    # dat_input = dat_input,
-    # dat_db = dat_db,
-    dat_station = dat_station,
-    knn = knn
-  )
-
-  model_prediction_ensemble <- model_predict_ensemble(
-    model_prediction = model_prediction,
-    dist_measure = dist_measure_final
-  )
-  # model_prediction_ensemble[[1]]$prediction_ensemble$dim_dist_measure
-
-  # Model output ------------------------------------------------------------
-
-  # model_result <- model_output(model_prediction_ensemble)
-
-  model_result_gathered <- model_output_gathered(model_prediction_ensemble)
-
-  if (settings$output$show) {
-    print("Show:")
-    print(settings$output$show)
-    model_result_render(
-      model_result_gathered,
-      knn = knn,
-      dist_measures = dist_measures,
-      dist_measure_final = dist_measure_final
-    )
-  }
-
-  model_result_gathered
-}
-
-#' @export
 model_run_v3 <- function(
   dat_input,
   dat_db,
@@ -1614,7 +1338,7 @@ model_run_prime <- function(
   )
 
   # Model output -----
-  model_output <- model_apply_v3(
+  model_output <- model_apply(
     model_estimation,
     dat_station = dat_station,
     knn = knn
@@ -1624,45 +1348,47 @@ model_run_prime <- function(
 }
 
 #' @export
-model_run_v7 <- function(
+model_run <- function(
   dat_input,
   dat_db,
   dat_station,
   knn,
-  session
+  session,
+  expand_weight_grid
 ) {
   shiny::withProgress(message = 'Getting recommendations', value = 0,
     session = session,
     {
-    shiny::incProgress(1/3, detail = "Estimating...", session = session)
+      shiny::incProgress(1/3, detail = "Estimating...", session = session)
 
-    # Add row UID -----
-    dat_db <- dat_db %>%
-      dplyr::mutate(
-        uid = 1:n()
+      # Add row UID -----
+      dat_db <- dat_db %>%
+        dplyr::mutate(
+          uid = 1:n()
+        )
+      # TODO 20181206: put in own function and find best place to call it
+
+      # Model estimation -----
+      model_estimation <- model_estimate(
+        dat_input = dat_input,
+        dat_db = dat_db,
+        dat_station = dat_station,
+        expand_weight_grid = expand_weight_grid
       )
-    # TODO 20181206: put in own function and find best place to call it
-
-    # Model estimation -----
-    model_estimation <- model_estimate_v8(
-      dat_input = dat_input,
-      dat_db = dat_db,
-      dat_station = dat_station
-    )
 
 
-    shiny::incProgress(2/3, detail = "Selecting...", session = session)
-    # Model output -----
-    model_output <- model_apply_v3(
-      model_estimation,
-      dat_station = dat_station,
-      knn = knn
-    )
+      shiny::incProgress(2/3, detail = "Selecting...", session = session)
+      # Model output -----
+      model_output <- model_apply(
+        model_estimation,
+        dat_station = dat_station,
+        knn = knn
+      )
 
-    shiny::incProgress(3/3, detail = "Done...", session = session)
+      shiny::incProgress(3/3, detail = "Done...", session = session)
 
-    model_output
-  })
+      model_output
+    })
 
   model_output
 }
@@ -1702,7 +1428,7 @@ handle_input_distance_v2 <- function(
   )
 }
 
-model_handle_input_time_v2 <- function(
+model_handle_input_time <- function(
   dat_input,
   dat_db
 ) {
@@ -1849,7 +1575,7 @@ model_handle_drop_dims_v2 <- function(dat_db, dat_input) {
   )
 }
 
-model_handle_column_alignment_v2 <- function(dat_db, dat_input) {
+model_handle_column_alignment <- function(dat_db, dat_input) {
   select_non_na <- function(x) {
     all(!is.na(x))
   }

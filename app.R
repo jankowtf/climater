@@ -431,16 +431,17 @@ server <- function(input, output, session) {
     knn <- settings$number_of_recommendations
 
     # future({
-    model_run_v7(
+    model_run(
       dat_input = dat_input,
       dat_db = dat_db_msr,
       dat_station = dat_station,
       knn = knn,
-      session = session
+      session = session,
+      expand_weight_grid = settings$expand_weight_grid
     )$model_output
     # }, globals = list(
     #   settings = settings,
-    #   model_run_v7 = model_run_v7,
+    #   model_run = model_run,
     #   dat_db_msr = dat_db_msr,
     #   dat_input = dat_input,
     #   dat_station = dat_station,

@@ -72,3 +72,12 @@ imputation via `data_trans_impute_missing_values()`
 * Update frontend version to v0.0.0.9004
 * Experimental version of deployable app script for shinyapps.io (`/inst/app/10-app_deployed.Rmd`)
 * Change ennumeration of scripts to double digits
+
+# climater v0.0.2.9000
+
+* Added setting `expand_weight_grid = TRUE/FALSE` which controls whether or not
+`expand.grid()` is used to create combinations of all weight factors in
+`model_estimate`
+* Started to rename functions from versioned name to bare name and deprecated
+outdated functions (not finished yet)
+* Bump to version v0.0.2.9000

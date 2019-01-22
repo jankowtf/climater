@@ -51,6 +51,8 @@ settings <- list(
   ui_mode_tabs = TRUE,
   # Use map(s) yes/no -----
   ui_mode_map = TRUE,
+  # Expand weight grid yes/no -----
+  expand_weight_grid = FALSE,
 
   ##############################################################################
   # Backend settings >> DO NOT CHANGE -----
