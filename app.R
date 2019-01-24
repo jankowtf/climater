@@ -425,6 +425,13 @@ server <- function(input, output, session) {
     # ))
   })
 
+  # Capture distance of prime location -----
+  dat_distance_prime_react <- reactive({
+    dat_model_output_prime_react() %>%
+      dplyr::select(msr_distance) %>%
+      dplyr::pull()
+  })
+
   dat_model_output_alts_react <- eventReactive(input$do, {
     dat_input <- dat_input_react()
     # knn <- as.numeric(input$knn)
@@ -436,6 +443,7 @@ server <- function(input, output, session) {
       dat_db = dat_db_msr,
       dat_station = dat_station,
       knn = knn,
+      msr_distance_prime = dat_distance_prime_react(),
       session = session,
       expand_weight_grid = settings$expand_weight_grid
     )$model_output
@@ -450,6 +458,7 @@ server <- function(input, output, session) {
     # ))
   })
 
+  # Output table for prime location -----
   output$model_output_prime <- shiny::renderDataTable({
     dat_model_output_prime_react() %>%
       dat_transform_monthnumbers_to_monthnames() %>%
@@ -467,19 +476,23 @@ server <- function(input, output, session) {
   # TODO-20180705: encapsulate column selection in own function to be more
   # flexible and make code easier to maintain
 
+  # Output table for alternative locations -----
   output$model_output_alts <- shiny::renderDataTable({
+    # mtcars
     dat_model_output_alts_react() %>%
       dat_transform_monthnumbers_to_monthnames() %>%
       dat_transform_relevant_columns(dev_mode = settings$dev_mode) %>%
       dplyr::mutate(msr_distance = msr_distance %>% round(4)) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(msr_distance) %>%
       dat_transform_names_to_label()
   }, options = list(
     scrollX = TRUE,
     scrollY = "400px",
     pageLength = 100,
     lengthChange = FALSE,
-    searching = FALSE,
-    order = list(list(1, 'asc')))
+    searching = FALSE)
+    # order = list(list(1, 'asc')))
   )
   # TODO-20180705: encapsulate column selection in own function to be more
   # flexible and make code easier to maintain

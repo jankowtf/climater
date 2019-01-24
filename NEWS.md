@@ -81,3 +81,21 @@ imputation via `data_trans_impute_missing_values()`
 * Started to rename functions from versioned name to bare name and deprecated
 outdated functions (not finished yet)
 * Bump to version v0.0.2.9000
+
+# climater v0.0.2.9001
+
+* Implemented implicit "max. allowed distance based on prime location" (see
+`dat_distance_prime_react()`) that acts as lower bound in
+`handle_input_distance()` and ensures that no alternative recommendation can be
+farther away than the prime location
+* Ensured distinct rows in alternative recommendation table (see
+`dplyr::distinct()` in `output$model_output_alts <-
+shiny::renderDataTable({...})`)
+* Ensure ascending ordering by `msr_distance` of alternative recommendations
+(see `dplyr::arrange()` in `output$model_output_alts <-
+shiny::renderDataTable({...})`)
+* Internal: removed versioning scheme from `model_estimate_inner*()`, now back to 
+`model_estimate_inner()`
+* Internal: removed versioning scheme from `handle_input_distance*()`, now back to 
+`handle_input_distance()`
+* Internal: bump to version v0.0.2.9001

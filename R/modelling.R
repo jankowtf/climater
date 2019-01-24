@@ -128,7 +128,8 @@ model_estimate <- function(
   dat_input,
   dat_db,
   dat_station,
-  expand_weight_grid
+  expand_weight_grid,
+  msr_distance_prime
 ) {
   # Get scaling factor(s) from settings -----
   if (TRUE) {
@@ -245,8 +246,12 @@ model_estimate <- function(
     function(v) list(v)[[1L]], .collate = "list")$.out
 
   df_estimate <- dat_input %>%
-    purrr::map(model_estimate_inner_v5,
-      dat_db = dat_db, dat_station = dat_station)
+    purrr::map(
+      model_estimate_inner,
+      dat_db = dat_db,
+      dat_station = dat_station,
+      msr_distance_prime = msr_distance_prime
+    )
 
   df_estimate
 }
@@ -291,7 +296,7 @@ model_estimate_inner_v2 <- function(.x) {
 
   # Handle distance input -----
   # Only keep stations that have distance <= user input
-  dat_list <- handle_input_distance_v2(
+  dat_list <- handle_input_distance(
     dat_input = dat_input,
     dat_msr_distance = dat_msr_distance
   )
@@ -425,7 +430,7 @@ model_estimate_prime_inner <- function(
 
   # Handle distance input -----
   # Only keep stations that have distance <= user input
-  dat_list <- handle_input_distance_v2(
+  dat_list <- handle_input_distance(
     dat_input = dat_input,
     dat_msr_distance = dat_msr_distance
   )
@@ -525,10 +530,11 @@ model_estimate_prime_inner <- function(
 }
 
 #' @export
-model_estimate_inner_v5 <- function(
+model_estimate_inner <- function(
   dat_input,
   dat_db,
-  dat_station
+  dat_station,
+  msr_distance_prime
 ) {
   # if (dat_input$id == "time=0_dist=0.0003") {
   # if (dat_input$id == "time=0.25_dist=1") {
@@ -546,9 +552,10 @@ model_estimate_inner_v5 <- function(
 
   # Handle distance input -----
   # Only keep stations that have distance <= user input
-  dat_list <- handle_input_distance_v2(
+  dat_list <- handle_input_distance(
     dat_input = dat_input,
-    dat_msr_distance = dat_msr_distance
+    dat_msr_distance = dat_msr_distance,
+    msr_distance_max = msr_distance_prime
   )
   # Update input and distance data:
   dat_input <- dat_list$dat_input
@@ -1353,6 +1360,7 @@ model_run <- function(
   dat_db,
   dat_station,
   knn,
+  msr_distance_prime,
   session,
   expand_weight_grid
 ) {
@@ -1373,7 +1381,8 @@ model_run <- function(
         dat_input = dat_input,
         dat_db = dat_db,
         dat_station = dat_station,
-        expand_weight_grid = expand_weight_grid
+        expand_weight_grid = expand_weight_grid,
+        msr_distance_prime = msr_distance_prime
       )
 
 
@@ -1394,22 +1403,30 @@ model_run <- function(
 }
 
 #' @export
-handle_input_distance_v2 <- function(
+handle_input_distance <- function(
   dat_input,
-  dat_msr_distance
+  dat_msr_distance,
+  msr_distance_max = numeric()
 ) {
   # col_msr_distance <- settings$name_mapping$msr_distance$key
   col_msr_distance <- rlang::sym("msr_distance")
   col_msr_distance_scaled <- rlang::sym("msr_distance_scaled")
   # TODO 20181129: refactor column names from settings
 
+  # Check if `msr_distance` was supplied as input -----
   idx <- colnames(dat_input) %>%
     stringr::str_detect(quo_name(col_msr_distance) %>%
         stringr::str_glue("$"))
+
   if (any(idx)) {
     value_msr_distance <- dat_input %>%
       dplyr::distinct(!!col_msr_distance) %>%
       dplyr::pull()
+
+    # Find min of max. allowed distance from input and from prime location -----
+    if (length(msr_distance_max)) {
+      value_msr_distance <- min(value_msr_distance, msr_distance_max)
+    }
     if (all(!is.na(value_msr_distance))) {
       dat_msr_distance <- dat_msr_distance %>% dplyr::filter(
         !!col_msr_distance <= value_msr_distance
