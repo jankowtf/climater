@@ -65,8 +65,8 @@ dat_read_multiple_generic <- function(
     }
 
     # Capture meta data -----
-    meta <- str_split(basename(path), "_", simplify = TRUE)
-    meta <- str_replace_all(meta, "\\.txt$", "")
+    meta <- stringr::str_split(basename(path), "_", simplify = TRUE)
+    meta <- stringr::str_replace_all(meta, "\\.txt$", "")
 
     # Add meta data -----
     dat <- mutate(dat,

@@ -212,10 +212,10 @@ data_trans_sunshine_duration_hours_per_day <- function(dat) {
 
   divide_by_days <- function(msr_sundur_avg, days_per_month, month) {
     round(msr_sundur_avg /
-      (days_per_month %>%
-      filter(time_month == month) %>%
-          # select(days) %>% pull()) * 24)
-          select(days) %>% pull()))
+        (days_per_month %>%
+            filter(time_month == month) %>%
+            # select(days) %>% pull()) * 24)
+            select(days) %>% pull()))
   }
 
   dat <- dat %>% group_by(time_month) %>%
@@ -424,13 +424,13 @@ data_trans_distance <- function(dat, dist_fun = compute_geo_distance) {
     dplyr::filter(!!k_station != !!k_station_ref) %>%
     dplyr::left_join(dat_nested, by = dplyr::quo_name(k_station)) %>%
     dplyr::left_join(dat_nested, by = c("dim_station_ref" = "dim_station"))
-    # TODO: handle via quosure
-    # left_join(dat_nested, by = c(dplyr::quo_name(k_station_ref) := dplyr::quo_name(k_station)))
+  # TODO: handle via quosure
+  # left_join(dat_nested, by = c(dplyr::quo_name(k_station_ref) := dplyr::quo_name(k_station)))
 
   dat_nested_3 <- dat_nested_2 %>%
     # Grid completed. Calcualte the distance by distHaversine
     dplyr::mutate(msr_distance = purrr::map2_dbl(dim_coords.x, dim_coords.y, dist_fun))
-    # TODO: handle via quosure
+  # TODO: handle via quosure
 
   # Select -----
   dat <- dplyr::select(dat_nested_3,
@@ -690,26 +690,85 @@ data_trans_db_msr_v2 <- function(dat_base) {
 }
 
 #' @export
-dat_transform_relevant_columns <- function(dat) {
+dat_transform_relevant_columns_minimal <- function(dat) {
   dat <- dat %>%
     dplyr::select(
-      id,
-      dim_rank,
+      # id,
+      # dim_rank,
       dim_country,
       dim_station_name,
       msr_distance,
       # dim_latitude,
       # dim_longitude,
       time_month,
-      diff_time_month,
+      # diff_time_month,
       msr_temp_min,
-      diff_msr_temp_min,
+      # diff_msr_temp_min,
       msr_temp_max,
-      diff_msr_temp_max,
+      # diff_msr_temp_max,
       msr_precip_avg,
-      diff_msr_precip_avg,
+      # diff_msr_precip_avg,
       msr_sundur_avg,
-      diff_msr_sundur_avg
+      # diff_msr_sundur_avg
+    )
+}
+
+#' @export
+dat_transform_relevant_columns <- function(dat, dev_mode = FALSE) {
+  cols <- rlang::syms(
+    list(
+      "dim_country",
+      "dim_station_name",
+      "msr_distance",
+      # "dim_latitude",
+      # "dim_longitude",
+      "time_month",
+      # "diff_time_month",
+      "msr_temp_min",
+      # "diff_msr_temp_min",
+      "msr_temp_max",
+      # "diff_msr_temp_max",
+      "msr_precip_avg",
+      # "diff_msr_precip_avg",
+      "msr_sundur_avg"
+      # "diff_msr_sundur_avg"
+    )
+  )
+
+  if (dev_mode) {
+    cols <- c(
+      rlang::syms(
+        list(
+          "id",
+          "dim_rank"
+        )
+      ),
+      cols
+    )
+  }
+
+  dat <- dat %>%
+    dplyr::select(!!!cols)
+}
+
+#' @export
+dat_transform_monthnumbers_to_monthnames <- function(dat) {
+  dat <- dat %>%
+    dplyr::mutate(
+      time_month = case_when(
+        time_month == 1 ~ "January",
+        time_month == 2 ~ "February",
+        time_month == 3 ~ "March",
+        time_month == 4 ~ "April",
+        time_month == 5 ~ "May",
+        time_month == 6 ~ "June",
+        time_month == 7 ~ "July",
+        time_month == 8 ~ "August",
+        time_month == 9 ~ "September",
+        time_month == 10 ~ "October",
+        time_month == 11 ~ "November",
+        time_month == 12 ~ "December"
+      )
     )
 }
 

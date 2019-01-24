@@ -43,6 +43,16 @@ settings <- list(
       0
     )
   ),
+  # Number of recommendations to show for dream locations -----
+  number_of_recommendations = 1,
+  # Dev mode yes/no. If yes, additional tabs/infos are shown -----
+  dev_mode = FALSE,
+  # Present results in tabs yes/no -----
+  ui_mode_tabs = TRUE,
+  # Use map(s) yes/no -----
+  ui_mode_map = TRUE,
+  # Expand weight grid yes/no -----
+  expand_weight_grid = FALSE,
 
   ##############################################################################
   # Backend settings >> DO NOT CHANGE -----
@@ -304,6 +314,9 @@ settings <- list(
         label_1 = "ID"
       )
     )
+  ),
+  api_keys = list(
+    google_maps = "AIzaSyB4GFcTvkAc9IsVLaWzS27vIsLtqu-1MxE"
   )
 )
 
