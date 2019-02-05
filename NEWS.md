@@ -99,3 +99,17 @@ shiny::renderDataTable({...})`)
 * Internal: removed versioning scheme from `handle_input_distance*()`, now back to 
 `handle_input_distance()`
 * Internal: bump to version v0.0.2.9001
+
+# climater v0.0.2.9002
+
+* Ensured that prime location isn't contained in alternatives by passing
+`dat_model_output_prime` to `model_run` which passes it through to
+`model_estimate_inner` which filters the return values accordingly.
+* Tried to catch constellations where settings lead to an empty intersection of
+the underlying DB via a pragmatic approach of returning `tibble()` as output of
+`model_estimate_prime` and `model_estimate` and subsequently checking for empty
+tibbles before visualizing. Works in the sense that at least an informative
+error message is displayed, but somehow UI does not "switch back" to the regular
+state even after a valid settings input is defined. Needs to be further
+investigated
+* Internal: bump to version v0.0.2.9002

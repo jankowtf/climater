@@ -129,7 +129,8 @@ model_estimate <- function(
   dat_db,
   dat_station,
   expand_weight_grid,
-  msr_distance_prime
+  msr_distance_prime,
+  dat_model_output_prime_react
 ) {
   # Get scaling factor(s) from settings -----
   if (TRUE) {
@@ -250,7 +251,8 @@ model_estimate <- function(
       model_estimate_inner,
       dat_db = dat_db,
       dat_station = dat_station,
-      msr_distance_prime = msr_distance_prime
+      msr_distance_prime = msr_distance_prime,
+      dat_model_output_prime_react = dat_model_output_prime_react
     )
 
   df_estimate
@@ -534,7 +536,8 @@ model_estimate_inner <- function(
   dat_input,
   dat_db,
   dat_station,
-  msr_distance_prime
+  msr_distance_prime,
+  dat_model_output_prime_react
 ) {
   # if (dat_input$id == "time=0_dist=0.0003") {
   # if (dat_input$id == "time=0.25_dist=1") {
@@ -697,6 +700,16 @@ model_estimate_inner <- function(
       index,
       rank,
       estimation_result
+    )
+
+  # Ensure that prime location(s) aren't part of alternatives -----
+  estimation_result <- estimation_result %>%
+    dplyr::filter(
+      !uid %in% dplyr::pull(dat_model_output_prime_react, uid)
+    )
+  dat_distance_geo <- dat_distance_geo %>%
+    dplyr::filter(
+      !dim_station %in% dplyr::pull(dat_model_output_prime_react, dim_station)
     )
 
   list(
@@ -941,13 +954,24 @@ model_apply <- function(
   # dat_result <- lapply(model_estimation, function(estimation) {
   model_output_list <- model_estimation %>%
     purrr::map(function(estimation) {
+      dat_input <- estimation$dat_input
+
       # Ensure matrix -----
       dat_db <- estimation$dat_db
+
+      # Early exit for incomaptible input settings -----
+      if (!nrow(dat_db)) {
+        return(
+          list(
+            model_input = dat_input,
+            model_output = tibble::tibble()
+          )
+        )
+      }
 
       choice <- estimation$estimation_result %>%
         dplyr::filter(rank %in% 1:knn)
 
-      dat_input <- estimation$dat_input
       v_id <- dat_input %>%
         dplyr::distinct(id) %>%
         dplyr::pull()
@@ -1361,6 +1385,7 @@ model_run <- function(
   dat_station,
   knn,
   msr_distance_prime,
+  dat_model_output_prime_react,
   session,
   expand_weight_grid
 ) {
@@ -1382,7 +1407,8 @@ model_run <- function(
         dat_db = dat_db,
         dat_station = dat_station,
         expand_weight_grid = expand_weight_grid,
-        msr_distance_prime = msr_distance_prime
+        msr_distance_prime = msr_distance_prime,
+        dat_model_output_prime_react = dat_model_output_prime_react
       )
 
 
