@@ -1,20 +1,26 @@
 #' @import dplyr
-usethis::use_package("dplyr")
+NULL
+# usethis::use_package("dplyr")
 
 #' @import fs
-usethis::use_package("fs")
+NULL
+# usethis::use_package("fs")
 
 #' @import rio
-usethis::use_package("rio")
+NULL
+# usethis::use_package("rio")
 
 #' @import stringr
-usethis::use_package("stringr")
+NULL
+# usethis::use_package("stringr")
 
 #' @importFrom snakecase to_any_case
-usethis::use_package("snakecase")
+NULL
+# usethis::use_package("snakecase")
 
 #' @importFrom magrittr %>%
-usethis::use_package("magrittr")
+NULL
+# usethis::use_package("magrittr")
 
 
 #' @importFrom purrr modify_at

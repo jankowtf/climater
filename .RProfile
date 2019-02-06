@@ -1,8 +1,2 @@
 Sys.setenv(language = "EN")
 
-local({
-  r <- getOption("repos")
-  r["CRAN"] <- "https://cran.rstudio.com/"
-  r["mycompany"] <- "https://github.com/rappster/climater/"
-  options(repos = r)
-})

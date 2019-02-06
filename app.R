@@ -13,10 +13,22 @@ library(magrittr)
 library(shiny)
 library(DT)
 library(here)
+library(philentropy)
+library(simputation)
+library(googleway)
+library(dplyr)
+library(fs)
+library(here)
+library(purrr)
+library(purrrlyr)
+library(rio)
+library(stringr)
+library(tibble)
+library(tidyr)
+library(usethis)
 
 # library(promises)
 # library(future)
-library(googleway)
 
 # Core package:
 if (basename(here::here()) == "climater") {

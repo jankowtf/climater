@@ -1,0 +1,5 @@
+# use curl for http connections
+options(rsconnect.http = "curl")
+
+# trace http requests
+options(rsconnect.http.timeout = 200)
