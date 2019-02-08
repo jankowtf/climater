@@ -5,9 +5,9 @@ account: janko-thyson
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 585041
-bundleId: 1860482
+bundleId: 1860513
 url: https://janko-thyson.shinyapps.io/climater/
-when: 1549488568.24704
+when: 1549489349.36528
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: .gitattributes|.Rbuildignore|.RProfile|.travis.yml|climater_deploy_key|climater_deploy_key.pub|codecov.yml|DESCRIPTION|LICENSE|LICENSE.md|NAMESPACE|NEWS.md|README.md|etc/rstudio-connect/rstudio-connect.gcfg|man/hello.Rd|opt/r-packages/climater/da306b54a635988dcd0b3042b952f09d7b902197.tar.gz|revdep/.gitignore|revdep/email.yml|inst|R|tests
+ignoredFiles: .gitattributes|.Rbuildignore|.RProfile|.travis.yml|climater_deploy_key|climater_deploy_key.pub|codecov.yml|DESCRIPTION|LICENSE|LICENSE.md|NAMESPACE|NEWS.md|README.md|etc/rstudio-connect/rstudio-connect.gcfg|man/hello.Rd|opt/r-packages/climater/b5ca8a8d340028aec2882f652bc04fb9e16ed609.tar.gz|revdep/.gitignore|revdep/email.yml|inst|R|tests
