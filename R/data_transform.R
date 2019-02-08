@@ -698,6 +698,7 @@ dat_transform_relevant_columns_minimal <- function(dat) {
       dim_country,
       dim_station_name,
       msr_distance,
+      msr_co2,
       # dim_latitude,
       # dim_longitude,
       time_month,
@@ -720,6 +721,7 @@ dat_transform_relevant_columns <- function(dat, dev_mode = FALSE) {
       "dim_country",
       "dim_station_name",
       "msr_distance",
+      "msr_co2",
       # "dim_latitude",
       # "dim_longitude",
       "time_month",
@@ -793,4 +795,10 @@ dat_transform_names_to_label <- function(
   names(dat) <- df_labels %>% dplyr::pull(label)
 
   dat
+}
+
+dat_add_co2 <- function(dat) {
+  dat %>%
+    dplyr::mutate(msr_co2 = msr_distance * 0.38)
+
 }

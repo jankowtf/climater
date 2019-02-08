@@ -54,7 +54,7 @@ settings <- list(
   # Dev mode yes/no. If yes, additional tabs/infos are shown -----
   dev_mode = FALSE,
   # Present results in tabs yes/no -----
-  ui_mode_tabs = TRUE,
+  ui_mode_tabs = FALSE,
   # Use map(s) yes/no -----
   ui_mode_map = TRUE,
   # Expand weight grid yes/no -----
@@ -318,6 +318,12 @@ settings <- list(
       key = dplyr::quo(id),
       label = list(
         label_1 = "ID"
+      )
+    ),
+    msr_co2 = list(
+      key = dplyr::quo(msr_co2),
+      label = list(
+        label_1 = "CO2 emission"
       )
     )
   ),

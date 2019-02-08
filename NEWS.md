@@ -113,3 +113,9 @@ error message is displayed, but somehow UI does not "switch back" to the regular
 state even after a valid settings input is defined. Needs to be further
 investigated
 * Internal: bump to version v0.0.2.9002
+
+# v0.0.2.9003
+
+* Added CO2 emissions (`msr_co2`) in `/app.R`
+* Changed defaut of setting `ui_mode_tabs` to `FALSE`
+* Internal: bump to version v0.0.2.9003

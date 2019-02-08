@@ -486,6 +486,7 @@ server <- function(input, output, session) {
     } else {
       dat_this %>%
         dat_transform_monthnumbers_to_monthnames() %>%
+        dat_add_co2() %>%
         dat_transform_relevant_columns_minimal() %>%
         dplyr::mutate(msr_distance = msr_distance %>% round(4)) %>%
         dat_transform_names_to_label()
@@ -511,6 +512,7 @@ server <- function(input, output, session) {
     } else {
       dat_this %>%
         dat_transform_monthnumbers_to_monthnames() %>%
+        dat_add_co2() %>%
         dat_transform_relevant_columns(dev_mode = settings$dev_mode) %>%
         dplyr::mutate(msr_distance = msr_distance %>% round(4)) %>%
         dplyr::distinct() %>%
