@@ -797,6 +797,7 @@ dat_transform_names_to_label <- function(
   dat
 }
 
+#' @export
 dat_add_co2 <- function(dat) {
   dat %>%
     dplyr::mutate(msr_co2 = msr_distance * 0.38)
