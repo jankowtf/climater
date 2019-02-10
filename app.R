@@ -47,8 +47,8 @@ options(scipen = 10)
 
 settings <- default_settings()
 settings$output$show <- FALSE
-set_global_data_repo("repo_1", settings = settings)
-#set_global_data_repo("repo_2", settings = settings)
+#set_global_data_repo("repo_1", settings = settings)
+set_global_data_repo("repo_2", settings = settings)
 map_key <- settings$api_keys$google_maps
 
 # Initialization aspects --------------------------------------------------
@@ -69,7 +69,7 @@ ui <- fluidPage(
   if (settings$ui_mode_map) {
     # inputPanel(
     div(
-      h4("1. Choose your location"),
+      h4("1. Enter your location into the text field"),
       googleway::google_mapOutput(outputId = "map", height = "220px")
     )
     # )
@@ -87,7 +87,7 @@ ui <- fluidPage(
   },
 
   div(
-    h4("2. Choose your favourite climate"),
+    h4("2. Choose your favourite climate using the handles"),
     inputPanel(
 
       selectInput("time_month", label = "Month of your travel",
