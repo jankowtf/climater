@@ -323,7 +323,7 @@ settings <- list(
     msr_co2 = list(
       key = dplyr::quo(msr_co2),
       label = list(
-        label_1 = "CO2 emission"
+        label_1 = "CO2-equivalents (kg)"
       )
     )
   ),

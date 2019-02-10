@@ -48,7 +48,7 @@ options(scipen = 10)
 settings <- default_settings()
 settings$output$show <- FALSE
 set_global_data_repo("repo_1", settings = settings)
-# set_global_data_repo("repo_2", settings = settings)
+#set_global_data_repo("repo_2", settings = settings)
 map_key <- settings$api_keys$google_maps
 
 # Initialization aspects --------------------------------------------------
@@ -64,12 +64,12 @@ if ("future" %in% loadedNamespaces()) {
 
 ui <- fluidPage(
   # Title -----
-  titlePanel("Your climate"),
+  titlePanel("Your Perfect Climate - Traveller's App"),
 
   if (settings$ui_mode_map) {
     # inputPanel(
     div(
-      h4("Choose your location"),
+      h4("1. Choose your location"),
       googleway::google_mapOutput(outputId = "map", height = "220px")
     )
     # )
@@ -87,10 +87,10 @@ ui <- fluidPage(
   },
 
   div(
-    h4("Choose your desired climate settings"),
+    h4("2. Choose your favourite climate"),
     inputPanel(
 
-      selectInput("time_month", label = "Month of year",
+      selectInput("time_month", label = "Month of your travel",
         # choices = 1:12, selected = 7, multiple = FALSE),
         choices = list(
           "January" = 1,
@@ -107,21 +107,21 @@ ui <- fluidPage(
           "December" = 12
         ), selected = 7, multiple = FALSE),
 
-      sliderInput("msr_distance", label = "Max. distance to destination",
+      sliderInput("msr_distance", label = "Max. distance to destination (km)",
         min = 0,
         max = 10000,
         value = 5000,
         step = 1,
         ticks = FALSE),
 
-      sliderInput("msr_temp_min", label = "Min. temperature",
+      sliderInput("msr_temp_min", label = "Daily min. temperature (°C)",
         min = min(dat_db_0$msr_temp_min, na.rm = TRUE) %>% floor(),
         max = max(dat_db_0$msr_temp_min, na.rm = TRUE) %>% ceiling(),
         value = mean(dat_db_0$msr_temp_min, na.rm = TRUE),
         step = 0.5,
         ticks = FALSE),
 
-      sliderInput("msr_temp_max", label = "Max. temperature",
+      sliderInput("msr_temp_max", label = "Daily max. temperature (°C)",
         min = min(dat_db_0$msr_temp_max, na.rm = TRUE) %>% floor(),
         max = max(dat_db_0$msr_temp_max, na.rm = TRUE) %>% ceiling(),
         value = mean(dat_db_0$msr_temp_min, na.rm = TRUE),
@@ -236,7 +236,7 @@ ui <- fluidPage(
         mainPanel(
           tabsetPanel(type = "tabs",
             tabPanel("Dream location",
-              h3("Your dream location"),
+              h3("Location with your perfect climate"),
               shiny::dataTableOutput("model_output_prime")
             ),
             tabPanel("Alternatives",
