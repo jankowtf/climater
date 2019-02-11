@@ -119,3 +119,8 @@ investigated
 * Added CO2 emissions (`msr_co2`) in `/app.R`
 * Changed defaut of setting `ui_mode_tabs` to `FALSE`
 * Internal: bump to version v0.0.2.9003
+
+# v0.0.2.9004
+
+* Aligned `/app.R` with deployment verison 
+* Internal: bump to version v0.0.2.9004
