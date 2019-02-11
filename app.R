@@ -31,7 +31,8 @@ library(usethis)
 # library(future)
 
 # Core package:
-if (basename(here::here()) == "climater") {
+runtype_local <- basename(here::here()) == "climater"
+if (runtype_local) {
   devtools::load_all(here::here())
 } else {
   library(climater)
@@ -47,14 +48,21 @@ options(scipen = 10)
 
 settings <- default_settings()
 settings$output$show <- FALSE
-#set_global_data_repo("repo_1", settings = settings)
-set_global_data_repo("repo_2", settings = settings)
+set_global_data_repo("repo_1", settings = settings)
+# set_global_data_repo("repo_2", settings = settings)
 map_key <- settings$api_keys$google_maps
 
 # Initialization aspects --------------------------------------------------
 
-dat_db_0 <- data_read_db(vsn = "v3")
-source("app_load_data.R")
+if (runtype_local) {
+  dat_db_0 <- data_read_db(vsn = "v3")
+  source("app_load_data.R")
+} else {
+  dat_db <- readRDS("db_v3.rds")
+  dat_db_0 <- dat_db
+  dat_db_msr <- readRDS("db_msr_v3.rds")
+  dat_station <- readRDS("station_v3.rds")
+}
 
 if ("future" %in% loadedNamespaces()) {
   plan(multiprocess)
