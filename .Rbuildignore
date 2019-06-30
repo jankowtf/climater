@@ -6,3 +6,4 @@
 ^codecov\.yml$
 ^packrat/
 ^\.Rprofile$
+^renv$

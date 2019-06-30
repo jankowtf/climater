@@ -4,9 +4,9 @@ username:
 account: janko-thyson
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 320587
-bundleId: 1315305
+appId: 567780
+bundleId: 1934015
 url: https://janko-thyson.shinyapps.io/climater_app/
-when: 1523533489.6287
+when: 1552408542.57368
 asMultiple: FALSE
 asStatic: FALSE

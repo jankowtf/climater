@@ -1,0 +1,12 @@
+name: climater-app-test
+title: climater-app-test
+username:
+account: janko-thyson
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 783934
+bundleId: 1933486
+url: https://janko-thyson.shinyapps.io/climater-app-test/
+when: 1552398524.76389
+asMultiple: FALSE
+asStatic: FALSE

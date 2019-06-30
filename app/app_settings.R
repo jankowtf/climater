@@ -8,7 +8,7 @@ settings <- list(
   ),
   # -> controls which parts of the data processing should be overwritten
   output = list(
-    show = TRUE
+    show = FALSE
   ),
   # -> controls if modeling results are shown via a temporary HTML file
   versions = list(
@@ -25,7 +25,45 @@ settings <- list(
     repo_2 = "C:/users/Sebastian/climater"
   ),
   # -> sets the data version to be used
+  scaling = list(
+    # distance_1 = 0
+    # distance_1 = 0.001
+    distances = list(
+      0.0005,
+      0.001,
+      0.002,
+      0.003,
+      0.004,
+      0.005,
+      0.006,
+      0.007
+    ),
+    time = list(
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    )
+  ),
+  # Number of recommendations to show for dream locations -----
+  number_of_recommendations = 1,
+  # Dev mode yes/no. If yes, additional tabs/infos are shown -----
+  dev_mode = FALSE,
+  # Present results in tabs yes/no -----
+  ui_mode_tabs = FALSE,
+  # Use map(s) yes/no -----
+  ui_mode_map = TRUE,
+  # Expand weight grid yes/no -----
+  expand_weight_grid = FALSE,
+
+  ##############################################################################
   # Backend settings >> DO NOT CHANGE -----
+  ##############################################################################
+  # TODO 20181122: align with settings approach from FVA project
   data = list(
     # dir_raw = "inst/app/data/raw",
     # dir_tidy = "inst/app/data/tidy",
@@ -269,7 +307,28 @@ settings <- list(
       label = list(
         label_1 = "Sunshine hours per day delta"
       )
+    ),
+    # fct_scaling = list(
+    #   key = dplyr::quo(fct_scaling),
+    #   label = list(
+    #     label_1 = "Scaling factor"
+    #   )
+    # )
+    id = list(
+      key = dplyr::quo(id),
+      label = list(
+        label_1 = "ID"
+      )
+    ),
+    msr_co2 = list(
+      key = dplyr::quo(msr_co2),
+      label = list(
+        label_1 = "CO2-equivalents (kg)"
+      )
     )
+  ),
+  api_keys = list(
+    google_maps = "AIzaSyB4GFcTvkAc9IsVLaWzS27vIsLtqu-1MxE"
   )
 )
 
